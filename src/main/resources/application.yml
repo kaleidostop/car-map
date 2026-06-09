@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: car-map
+  datasource:
+    url: jdbc:postgresql://localhost:5433/carmap_db
+    username: carmap_user
+    password: carmap_pass
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+logging:
+  level:
+    root: INFO

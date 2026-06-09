@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="1" author="you">
+        <!-- Отделы компании -->
+        <createTable tableName="departments">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="varchar(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </createTable>
+
+        <!-- Пользователи -->
+        <createTable tableName="users">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="email" type="varchar(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="password_hash" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="full_name" type="varchar(150)"/>
+            <column name="department_id" type="bigint">
+                <constraints foreignKeyName="fk_users_department" references="departments(id)"/>
+            </column>
+            <column name="role" type="varchar(20)" defaultValue="ROLE_USER"/>
+        </createTable>
+
+        <!-- Офисы -->
+        <createTable tableName="offices">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="varchar(150)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address" type="varchar(300)"/>
+            <column name="latitude" type="double"/>
+            <column name="longitude" type="double"/>
+        </createTable>
+
+        <!-- Поездки -->
+        <createTable tableName="rides">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="driver_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_rides_driver" references="users(id)"/>
+            </column>
+            <column name="office_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_rides_office" references="offices(id)"/>
+            </column>
+            <column name="departure_address" type="varchar(300)"/>
+            <column name="departure_lat" type="double"/>
+            <column name="departure_lon" type="double"/>
+            <column name="departure_time" type="timestamp"/>
+            <column name="seats_total" type="int" defaultValue="4"/>
+            <column name="seats_available" type="int" defaultValue="4"/>
+            <column name="allowed_departments" type="text"/>
+            <column name="status" type="varchar(20)" defaultValue="ACTIVE"/>
+            <column name="route_polyline" type="text"/>
+            <column name="distance_meters" type="double"/>
+            <column name="duration_seconds" type="double"/>
+        </createTable>
+
+        <!-- Запросы на присоединение -->
+        <createTable tableName="ride_requests">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="ride_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_request_ride" references="rides(id)"/>
+            </column>
+            <column name="passenger_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_request_passenger" references="users(id)"/>
+            </column>
+            <column name="status" type="varchar(20)" defaultValue="PENDING"/>
+            <column name="created_at" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

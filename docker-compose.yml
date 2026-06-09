@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: carmap-db
+    environment:
+      POSTGRES_DB: carmap_db
+      POSTGRES_USER: carmap_user
+      POSTGRES_PASSWORD: carmap_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
