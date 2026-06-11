@@ -5,6 +5,11 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
 
-    <include file="db/changelog/001-create-tables.xml" relativeToChangelogFile="false"/>
+    <changeSet id="2" author="kaleidostop">
+        <dropForeignKeyConstraint baseTableName="users" constraintName="fk_users_department"/>
+        <dropColumn tableName="users" columnName="department_id"/>
+
+        <dropTable tableName="departments"/>
+    </changeSet>
 
 </databaseChangeLog>
