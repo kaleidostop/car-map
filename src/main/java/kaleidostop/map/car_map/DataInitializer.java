@@ -30,7 +30,7 @@ public class DataInitializer implements CommandLineRunner {
 
             User passenger = new User();
             passenger.setEmail("user@example.com");
-            passenger.setPasswordHash(passwordEncoder.encode("user_password"));
+            passenger.setPasswordHash(passwordEncoder.encode("multipass"));
             passenger.setFullName("Лилу");
             passenger.setRole(Role.ROLE_USER);
             userRepository.save(passenger);

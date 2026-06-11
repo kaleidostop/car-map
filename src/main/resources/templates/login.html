@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход - CarMap</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="d-flex align-items-center py-4 bg-light min-vh-100">
+    <main class="form-signin w-100 m-auto" style="max-width: 400px;">
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <h1 class="h3 mb-3 text-center">Вход в CarMap</h1>
+                <div id="error-alert" class="alert alert-danger d-none" role="alert"></div>
+                
+                <form id="login-form">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Пароль</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Войти</button>
+                </form>
+                
+                <div class="mt-3 text-center">
+                    <span>Ещё нет аккаунта? </span>
+                    <a href="/register">Зарегистрироваться</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/login.js"></script>
+</body>
+</html>
