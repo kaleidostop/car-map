@@ -1,6 +1,7 @@
 package kaleidostop.map.car_map.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +10,7 @@ import kaleidostop.map.car_map.domain.Office;
 import kaleidostop.map.car_map.domain.Ride;
 import kaleidostop.map.car_map.domain.RideStatus;
 import kaleidostop.map.car_map.domain.User;
+import kaleidostop.map.car_map.dto.RideResponse;
 import kaleidostop.map.car_map.repository.OfficeRepository;
 import kaleidostop.map.car_map.repository.RideRepository;
 
@@ -42,4 +44,27 @@ public class RideService {
         // Пока без маршрута, расстояния и т.д.
         return rideRepository.save(ride);
     }
+
+    public List<RideResponse> getActiveRides() {
+        List<Ride> rides = rideRepository.findByStatus(RideStatus.ACTIVE);
+        return rides.stream().map(this::toResponse).toList();
+    }
+
+    private RideResponse toResponse(Ride ride) {
+        return new RideResponse(
+            ride.getId(),
+            ride.getDriver().getFullName(), 
+            ride.getOffice().getName(),
+            ride.getOffice().getLatitude(),
+            ride.getOffice().getLongitude(),
+            ride.getDepartureAddress(),
+            ride.getDepartureLat(),
+            ride.getDepartureLon(),
+            ride.getDepartureTime(),
+            ride.getSeatsTotal(),
+            ride.getSeatsAvailable(),
+            ride.getStatus().name()
+        );
+    }
+
 }

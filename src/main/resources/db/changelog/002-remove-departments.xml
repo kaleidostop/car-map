@@ -10,6 +10,7 @@
         <dropColumn tableName="users" columnName="department_id"/>
 
         <dropTable tableName="departments"/>
+        <dropColumn tableName="rides" columnName="allowed_departments"/>
     </changeSet>
 
 </databaseChangeLog>

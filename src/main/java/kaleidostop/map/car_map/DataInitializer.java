@@ -25,19 +25,49 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         if (userRepository.count() == 0) {
-            User driver = new User();
-            driver.setEmail("driver@example.com");
-            driver.setPasswordHash(passwordEncoder.encode("driver_password"));
-            driver.setFullName("Корбен Даллас");
-            driver.setRole(Role.ROLE_DRIVER);
-            userRepository.save(driver);
+            // Водители
+            User driver1 = new User();
+            driver1.setEmail("driver@example.com");
+            driver1.setPasswordHash(passwordEncoder.encode("driver"));
+            driver1.setFullName("Райан Гослинг");
+            driver1.setRole(Role.ROLE_DRIVER);
+            userRepository.save(driver1);
 
-            User passenger = new User();
-            passenger.setEmail("user@example.com");
-            passenger.setPasswordHash(passwordEncoder.encode("multipass"));
-            passenger.setFullName("Лилу");
-            passenger.setRole(Role.ROLE_USER);
-            userRepository.save(passenger);
+            User driver2 = new User();
+            driver2.setEmail("car@example.com");
+            driver2.setPasswordHash(passwordEncoder.encode("car"));
+            driver2.setFullName("Молния Маккуин");
+            driver2.setRole(Role.ROLE_DRIVER);
+            userRepository.save(driver2);
+
+            User driver3 = new User();
+            driver3.setEmail("transformer@example.com");
+            driver3.setPasswordHash(passwordEncoder.encode("transformer"));
+            driver3.setFullName("Оптимус Прайм");
+            driver3.setRole(Role.ROLE_DRIVER);
+            userRepository.save(driver3);
+
+            // Пассажиры
+            User passenger1 = new User();
+            passenger1.setEmail("user1@example.com");
+            passenger1.setPasswordHash(passwordEncoder.encode("user1"));
+            passenger1.setFullName("Пассажир 1");
+            passenger1.setRole(Role.ROLE_USER);
+            userRepository.save(passenger1);
+
+            User passenger2 = new User();
+            passenger2.setEmail("user2@example.com");
+            passenger2.setPasswordHash(passwordEncoder.encode("user2"));
+            passenger2.setFullName("Пассажир 2");
+            passenger2.setRole(Role.ROLE_USER);
+            userRepository.save(passenger2);
+
+            User passenger3 = new User();
+            passenger3.setEmail("user3@example.com");
+            passenger3.setPasswordHash(passwordEncoder.encode("user3"));
+            passenger3.setFullName("Пассажир 3");
+            passenger3.setRole(Role.ROLE_USER);
+            userRepository.save(passenger3);
 
             // Админ
             User admin = new User();
