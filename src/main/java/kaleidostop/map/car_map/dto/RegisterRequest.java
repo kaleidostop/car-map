@@ -5,15 +5,15 @@ import jakarta.validation.constraints.Size;
 
 public class RegisterRequest {
 
-    @NotBlank(message = "Email is mandatory")
-    @Email(message = "Email should be valid")
+    @NotBlank(message = "Email обязателен")
+    @Email(message = "Email должен быть валидным")
     private String email;
 
-    @NotBlank(message = "Password is mandatory")
-    @Size(min = 6, message = "Password must be at least 6 characters")
+    @NotBlank(message = "Пароль обязателен")
+    @Size(min = 6, message = "Длина пароля должна быть как минимум 6 симолов")
     private String password;
 
-    @NotBlank(message = "Full name is mandatory")
+    @NotBlank(message = "Полное имя обязательно")
     private String fullName;
 
     public String getEmail() {

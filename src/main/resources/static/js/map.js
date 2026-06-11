@@ -1,13 +1,6 @@
 const DEFAULT_CENTER = [59.939, 30.316];  // центр Санкт-Петербурга
 const DEFAULT_ZOOM = 12;
 
-const TEST_OFFICES = [
-    { name: 'Главный корпус', address: 'Санкт-Петербург, Кронверкский пр., 49', lat: 59.956363, lon: 30.310011 },
-    { name: 'Корпус на Ломоносова', address: 'Санкт-Петербург, ул. Ломоносова, 9', lat: 59.927288, lon: 30.338353 },
-    { name: 'Спортивный комплекс', address: 'Санкт-Петербург, Вяземский пер., 5-7', lat: 59.972631, lon: 30.302501 }
-];
-
-
 const token = localStorage.getItem('jwt_token');
 if (!token) {
     window.location.href = '/login';
@@ -15,8 +8,12 @@ if (!token) {
 
 try {
     const payload = JSON.parse(atob(token.split('.')[1]));
+    const role = payload.role;
+    if (role === 'ROLE_DRIVER' || role === 'ROLE_ADMIN') {
+        document.getElementById('create-ride-btn').style.display = 'inline-block';
+    }
     document.getElementById('user-info').textContent = 
-        `Вы вошли как: ${payload.sub} (роль: ${payload.role})`;
+        `Вы вошли как: ${payload.sub} (роль: ${role})`;
 } catch(e) {
     localStorage.removeItem('jwt_token');
     window.location.href = '/login';
@@ -36,22 +33,32 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
 }).addTo(map);
 
-const officeList = document.getElementById('office-list');
+async function loadOffices() {
+    const response = await fetchWithAuth('/api/offices');
+    if (!response.ok) {
+        console.error('Failed to load offices');
+        return;
+    }
+    const offices = await response.json();
+    const officeList = document.getElementById('office-list');
+    const markers = []; 
+    offices.forEach(office => {
+        const marker = L.marker([office.latitude, office.longitude])
+            .addTo(map)
+            .bindPopup(`<b>${office.name}</b><br>${office.address}`);
+        markers.push(marker);
 
-const markers = []; 
-TEST_OFFICES.forEach(office => {
-    const marker = L.marker([office.lat, office.lon])
-        .addTo(map)
-        .bindPopup(`<b>${office.name}</b><br>${office.address}`);
-    markers.push(marker);
+        const li = document.createElement('li');
+        li.className = 'list-group-item';
+        li.innerHTML = `<strong>${office.name}</strong><br><small>${office.address}</small>`;
+        officeList.appendChild(li);
+    });
 
-    const li = document.createElement('li');
-    li.className = 'list-group-item';
-    li.innerHTML = `<strong>${office.name}</strong><br><small>${office.address}</small>`;
-    officeList.appendChild(li);
-});
-
-if (markers.length > 0) {
-    const group = L.featureGroup(markers);
-    map.fitBounds(group.getBounds().pad(0.1)); 
+    if (markers.length > 0) {
+        const group = L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.1));
+    }
 }
+
+loadOffices();
+
