@@ -1,0 +1,44 @@
+package kaleidostop.map.car_map.service;
+
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import kaleidostop.map.car_map.dto.osrm.OsrmResponse;
+import kaleidostop.map.car_map.dto.osrm.OsrmRoute;
+import kaleidostop.map.car_map.dto.osrm.RouteInfo;
+import reactor.core.publisher.Mono;
+
+@Service
+public class RoutingService {
+
+    private final WebClient webClient;
+
+    public RoutingService(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder.baseUrl("https://router.project-osrm.org").build();
+    }
+
+    public RouteInfo getRoute(double fromLon, double fromLat, double toLon, double toLat) {
+        String coordinates = fromLon + "," + fromLat + ";" + toLon + "," + toLat;
+        OsrmResponse response = webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/route/v1/driving/{coordinates}")
+                        .queryParam("overview", "full")
+                        .queryParam("geometries", "geojson")
+                        .build(coordinates))
+                .retrieve()
+                .bodyToMono(OsrmResponse.class)
+                .onErrorResume(e -> Mono.empty()) 
+                .block();
+
+        if (response == null || response.getRoutes().isEmpty()) {
+            return null;
+        }
+
+        OsrmRoute route = response.getRoutes().get(0);
+        RouteInfo info = new RouteInfo();
+        info.setDistanceMeters(route.getDistance());
+        info.setDurationSeconds(route.getDuration());
+        info.setGeometry(route.getGeometry());
+        return info;
+    }
+}

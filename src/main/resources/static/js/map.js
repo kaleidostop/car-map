@@ -62,6 +62,9 @@ async function loadOffices() {
 
 }
 
+let selectedRideId = null;
+let selectedLayers = []; 
+
 async function loadRides() {
     const response = await fetchWithAuth('/api/rides');
     if (!response.ok) {
@@ -72,11 +75,26 @@ async function loadRides() {
 
     rideMarkers.forEach(m => map.removeLayer(m));
     rideMarkers = [];
+    selectedLayers = [];
+    selectedRideId = null;
 
     const rideList = document.getElementById('ride-list');
     if (rideList) rideList.innerHTML = '';
 
     rides.forEach(ride => {
+        const duration = ride.durationSeconds ? Math.round(ride.durationSeconds / 60) + ' мин' : 'неизвестно';
+
+        const popupContent = `
+            <b>Поездка #${ride.id}</b><br>
+            Водитель: ${ride.driverName}<br>
+            Офис: ${ride.officeName}<br>
+            Место отправления:  ${ride.departureAddress}<br>
+            Время: ${new Date(ride.departureTime).toLocaleString()}<br>
+            В пути: ${duration}<br>
+            Мест: ${ride.seatsAvailable} из ${ride.seatsTotal}<br>
+            <button onclick="joinRide(${ride.id})" class="badge bg-success">Присоединиться</button>
+        `;
+
         const startMarker = L.marker([ride.departureLat, ride.departureLon], {
             icon: L.icon({
                 iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
@@ -86,23 +104,53 @@ async function loadRides() {
                 popupAnchor: [1, -34],
                 shadowSize: [41, 41]
             })
-        }).bindPopup(`
-            <b>Поездка #${ride.id}</b><br>
-            Водитель: ${ride.driverName}<br>
-            Офис: ${ride.officeName}<br>
-            Место отправления:  ${ride.departureAddress}<br>
-            Время: ${new Date(ride.departureTime).toLocaleString()}<br>
-            Мест: ${ride.seatsAvailable} из ${ride.seatsTotal}<br>
-            <button onclick="joinRide(${ride.id})" class="badge bg-success">Присоединиться</button>
-        `);
+        }).bindPopup(popupContent);
 
-        const polyline = L.polyline([
-            [ride.departureLat, ride.departureLon],
-            [ride.officeLat, ride.officeLon]
-        ], { color: 'green', dashArray: '5,5' }).bindPopup(`Маршрут поездки #${ride.id}`);
+        let polyline;
+        if (ride.routeGeometry) {
+            polyline = L.geoJSON(ride.routeGeometry, {
+                style: { color: '#999', weight: 5 }
+            });
+        } else {
+            polyline = L.polyline([
+                [ride.departureLat, ride.departureLon],
+                [ride.officeLat, ride.officeLon]
+            ], { color: '#999', dashArray: '5,5' });
+        }
 
+        const selectThisRide = () => {
+            if (selectedLayers.length) {
+                selectedLayers.forEach(layer => {
+                    if (layer instanceof L.Marker) {
+                    } else {
+                        layer.setStyle({ color: '#999', weight: 5 });
+                    }
+                });
+            }
+            selectedRideId = ride.id;
+            selectedLayers = [startMarker, polyline];
+            if (polyline.setStyle) {
+                polyline.setStyle({ color: 'green', weight: 6 });
+                polyline.bringToFront();
+            }
+            if (startMarker.bringToFront) {
+                startMarker.bringToFront(); 
+            }
+            document.querySelectorAll('#ride-list .list-group-item').forEach(el => el.classList.remove('active'));
+            const rideItem = document.getElementById('ride-item-' + ride.id);
+            if (rideItem) rideItem.classList.add('active');
+        };
+
+        startMarker.on('click', selectThisRide);
+        if (polyline.on) {
+            polyline.on('click', selectThisRide);
+        }
+        
         startMarker.addTo(map);
-        polyline.addTo(map);
+        if (polyline.addTo) {
+            polyline.addTo(map);
+        }
+
         rideMarkers.push(startMarker);
         rideMarkers.push(polyline);
 
@@ -114,6 +162,7 @@ async function loadRides() {
             <small>${new Date(ride.departureTime).toLocaleString()}</small><br>
             Свободных мест: <span class="badge bg-success">${ride.seatsAvailable}</span>
         `;
+        li.addEventListener('click', selectThisRide);
         rideList.appendChild(li);
     });
 

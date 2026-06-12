@@ -1,6 +1,7 @@
 package kaleidostop.map.car_map.dto;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 public class RideResponse {
     private Long id;
@@ -15,13 +16,17 @@ public class RideResponse {
     private int seatsTotal;
     private int seatsAvailable;
     private String status;
-    // routePolyline, distance, duration - позже
+    private double distanceMeters;
+    private double durationSeconds;
+    private Map<String, Object> routeGeometry;
 
     public RideResponse(Long id, String driverName, String officeName,
                         double officeLat, double officeLon,
                         String departureAddress, double departureLat, double departureLon,
                         LocalDateTime departureTime, int seatsTotal, int seatsAvailable,
-                        String status) {
+                        String status,
+                        double distanceMeters, double durationSeconds,
+                        Map<String, Object> routeGeometry) {
         this.id = id;
         this.driverName = driverName;
         this.officeName = officeName;
@@ -34,6 +39,9 @@ public class RideResponse {
         this.seatsTotal = seatsTotal;
         this.seatsAvailable = seatsAvailable;
         this.status = status;
+        this.distanceMeters = distanceMeters;
+        this.durationSeconds = durationSeconds;
+        this.routeGeometry = routeGeometry;
     }
 
     public Long getId() { return id; }
@@ -48,4 +56,7 @@ public class RideResponse {
     public int getSeatsTotal() { return seatsTotal; }
     public int getSeatsAvailable() { return seatsAvailable; }
     public String getStatus() { return status; }
+    public double getDistanceMeters() { return distanceMeters; }
+    public double getDurationSeconds() { return durationSeconds; }
+    public Map<String, Object> getRouteGeometry() { return routeGeometry; }
 }

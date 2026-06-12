@@ -1,27 +1,46 @@
 package kaleidostop.map.car_map;
 
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import kaleidostop.map.car_map.domain.Office;
+import kaleidostop.map.car_map.domain.Ride;
 import kaleidostop.map.car_map.domain.Role;
 import kaleidostop.map.car_map.domain.User;
+import kaleidostop.map.car_map.dto.osrm.RouteInfo;
 import kaleidostop.map.car_map.repository.OfficeRepository;
+import kaleidostop.map.car_map.repository.RideRepository;
 import kaleidostop.map.car_map.repository.UserRepository;
+import kaleidostop.map.car_map.service.RideService;
+import kaleidostop.map.car_map.service.RoutingService;
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final OfficeRepository officeRepository;
+    private final RideRepository rideRepository;
+    private final RoutingService routingService;
+    private final ObjectMapper objectMapper;
     private final PasswordEncoder passwordEncoder;
+    private static final Logger log = LoggerFactory.getLogger(RideService.class);
 
-    public DataInitializer(UserRepository userRepository, OfficeRepository officeRepository, PasswordEncoder passwordEncoder) {
+    public DataInitializer(UserRepository userRepository, OfficeRepository officeRepository, RideRepository rideRepository, RoutingService routingService, ObjectMapper objectMapper, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.officeRepository = officeRepository;
+        this.rideRepository = rideRepository;
+        this.routingService = routingService;
+        this.objectMapper = objectMapper;
         this.passwordEncoder = passwordEncoder;
     }
 
+    @Transactional
     @Override
     public void run(String... args) {
         if (userRepository.count() == 0) {
@@ -99,5 +118,30 @@ public class DataInitializer implements CommandLineRunner {
             o3.setLongitude(30.302501);
             officeRepository.save(o3);
         }
+
+        // rideRepository.deleteLastEntity();
+
+        List<Ride> ridesWithoutRoute = rideRepository.findAll()
+        .stream()
+        .filter(r -> r.getRoutePolyline() == null)
+        .toList();
+
+        for (Ride ride : ridesWithoutRoute) {
+            RouteInfo info = routingService.getRoute(
+                    ride.getDepartureLon(), ride.getDepartureLat(),
+                    ride.getOffice().getLongitude(), ride.getOffice().getLatitude()
+            );
+            if (info != null) {
+                ride.setDistanceMeters(info.getDistanceMeters());
+                ride.setDurationSeconds(info.getDurationSeconds());
+                try {
+                    ride.setRoutePolyline(objectMapper.writeValueAsString(info.getGeometry()));
+                } catch (Exception e) {
+                    log.warn("Failed to serialize route geometry for ride {}", ride.getId(), e);
+                }
+                rideRepository.save(ride);
+            }
+        }
+
     }
 }
