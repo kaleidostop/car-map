@@ -66,10 +66,16 @@ public class RideService {
         return rideRepository.save(ride);
     }
 
-    public List<RideResponse> getActiveRides() {
-        List<Ride> rides = rideRepository.findByStatus(RideStatus.ACTIVE);
+    public List<RideResponse> getActiveRides(Long officeId) {
+        List<Ride> rides;
+        if (officeId != null) {
+            rides = rideRepository.findByStatusAndOfficeId(RideStatus.ACTIVE, officeId);
+        } else {
+            rides = rideRepository.findByStatus(RideStatus.ACTIVE);
+        }
         return rides.stream().map(this::toResponse).toList();
     }
+
 
     @SuppressWarnings("unchecked")
     private RideResponse toResponse(Ride ride) {

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
@@ -45,7 +46,8 @@ public class RideController {
     }
 
     @GetMapping
-    public ResponseEntity<List<RideResponse>> getActiveRides() {
-        return ResponseEntity.ok(rideService.getActiveRides());
+    public ResponseEntity<List<RideResponse>> getActiveRides(
+            @RequestParam(name = "officeId", required = false) Long officeId) {
+        return ResponseEntity.ok(rideService.getActiveRides(officeId));
     }
 }

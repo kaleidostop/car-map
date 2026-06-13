@@ -9,4 +9,6 @@ import kaleidostop.map.car_map.domain.RideStatus;
 
 public interface RideRepository extends JpaRepository<Ride, Long> {
     List<Ride> findByStatus(RideStatus status);
+
+    List<Ride> findByStatusAndOfficeId(RideStatus status, Long officeId);
 }

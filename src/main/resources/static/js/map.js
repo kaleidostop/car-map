@@ -42,11 +42,11 @@ async function loadOffices() {
         return;
     }
     const offices = await response.json();
-    const officeList = document.getElementById('office-list');
-    officeList.innerHTML = ''; 
 
     officeMarkers.forEach(m => map.removeLayer(m));
     officeMarkers = [];
+
+    const filterSelect = document.getElementById('office-filter');
 
     offices.forEach(office => {
         const marker = L.marker([office.latitude, office.longitude])
@@ -54,19 +54,26 @@ async function loadOffices() {
             .bindPopup(`<b>${office.name}</b><br>${office.address}`);
         officeMarkers.push(marker);
 
-        const li = document.createElement('li');
-        li.className = 'list-group-item';
-        li.innerHTML = `<strong>${office.name}</strong><br><small>${office.address}</small>`;
-        officeList.appendChild(li);
+        const option = document.createElement('option');
+        option.value = office.id;
+        option.textContent = office.name;
+        filterSelect.appendChild(option);
     });
 
+    filterSelect.addEventListener('change', () => {
+        loadRides(filterSelect.value);
+    });
 }
+
 
 let selectedRideId = null;
 let selectedLayers = []; 
 
-async function loadRides() {
-    const response = await fetchWithAuth('/api/rides');
+async function loadRides(officeId = null) {
+    let url = '/api/rides';
+    if (officeId) url += '?officeId=' + officeId;
+
+    const response = await fetchWithAuth(url);
     if (!response.ok) {
         console.error('Failed to load rides');
         return;
@@ -110,12 +117,12 @@ async function loadRides() {
         if (ride.routeGeometry) {
             polyline = L.geoJSON(ride.routeGeometry, {
                 style: { color: '#999', weight: 5 }
-            });
+            }).bindPopup(popupContent);
         } else {
             polyline = L.polyline([
                 [ride.departureLat, ride.departureLon],
                 [ride.officeLat, ride.officeLon]
-            ], { color: '#999', dashArray: '5,5' });
+            ], { color: '#999', dashArray: '5,5' }).bindPopup(popupContent);
         }
 
         const selectThisRide = () => {
@@ -143,7 +150,10 @@ async function loadRides() {
 
         startMarker.on('click', selectThisRide);
         if (polyline.on) {
-            polyline.on('click', selectThisRide);
+            polyline.on('click',  function(e) {
+                selectThisRide();   
+                this.openPopup(e.latlng);  
+            });
         }
         
         startMarker.addTo(map);

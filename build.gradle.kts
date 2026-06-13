@@ -18,6 +18,7 @@ repositories {
 }
 
 dependencies {
+	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-liquibase")
 	implementation("org.springframework.boot:spring-boot-starter-security")
@@ -30,6 +31,7 @@ dependencies {
 	runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.5")
 	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.5")
 	runtimeOnly("org.postgresql:postgresql")
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
 	testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-liquibase-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-security-test")
