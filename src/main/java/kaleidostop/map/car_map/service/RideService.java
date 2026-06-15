@@ -9,14 +9,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import kaleidostop.map.car_map.config.RideConstants;
 import kaleidostop.map.car_map.domain.Office;
 import kaleidostop.map.car_map.domain.Ride;
+import kaleidostop.map.car_map.domain.RideRequest;
+import kaleidostop.map.car_map.domain.RideRequestStatus;
 import kaleidostop.map.car_map.domain.RideStatus;
 import kaleidostop.map.car_map.domain.User;
 import kaleidostop.map.car_map.dto.RideResponse;
 import kaleidostop.map.car_map.dto.osrm.RouteInfo;
 import kaleidostop.map.car_map.repository.OfficeRepository;
 import kaleidostop.map.car_map.repository.RideRepository;
+import kaleidostop.map.car_map.repository.RideRequestRepository;
 import tools.jackson.databind.ObjectMapper;
 
 @Service
@@ -25,13 +29,15 @@ public class RideService {
     private final OfficeRepository officeRepository;
     private final RoutingService routingService;
     private final ObjectMapper objectMapper;
+    private final RideRequestRepository rideRequestRepository;
     private static final Logger log = LoggerFactory.getLogger(RideService.class);
 
-    public RideService(RideRepository rideRepository, OfficeRepository officeRepository, RoutingService routingService, ObjectMapper objectMapper) {
+    public RideService(RideRepository rideRepository, OfficeRepository officeRepository, RoutingService routingService, RideRequestRepository rideRequestRepository, ObjectMapper objectMapper) {
         this.rideRepository = rideRepository;
         this.officeRepository = officeRepository;
         this.routingService = routingService;
         this.objectMapper = objectMapper;
+        this.rideRequestRepository = rideRequestRepository;
     }
 
     @Transactional
@@ -74,6 +80,63 @@ public class RideService {
             rides = rideRepository.findByStatus(RideStatus.ACTIVE);
         }
         return rides.stream().map(this::toResponse).toList();
+    }
+
+    @Transactional
+    public RideRequest joinRide(Long rideId, User passenger, double passLat, double passLon) {
+        Ride ride = rideRepository.findById(rideId)
+                .orElseThrow(() -> new IllegalArgumentException("Поездка не найдена"));
+        System.out.println(ride.getDriver().getId());
+        System.out.println(passenger.getId());
+
+        if (ride.getStatus() != RideStatus.ACTIVE) {
+            throw new IllegalStateException("Поездка недоступна для присоединения");
+        }
+        if (ride.getSeatsAvailable() <= 0) {
+            throw new IllegalStateException("Нет свободных мест");
+        }
+        if (ride.getDriver().getId().equals(passenger.getId())) {
+            throw new IllegalArgumentException("Нельзя присоединиться к своей поездке");
+        }
+        if (rideRequestRepository.existsByRideAndPassengerAndStatus(ride, passenger, RideRequestStatus.ACCEPTED)) {
+            throw new IllegalArgumentException("Вы уже отправили запрос на эту поездку");
+        }
+
+        double originalDistance = ride.getDistanceMeters() != null ? ride.getDistanceMeters() : 0.0;
+        RouteInfo detourInfo = routingService.getRoute(
+                ride.getDepartureLon(), ride.getDepartureLat(),
+                passLon, passLat,
+                ride.getOffice().getLongitude(), ride.getOffice().getLatitude()
+        );
+        if (detourInfo == null) {
+            throw new RuntimeException("Не удалось рассчитать маршрут с пассажиром");
+        }
+
+        double newDistance = detourInfo.getDistanceMeters();
+        double detour = newDistance - originalDistance;
+        if (detour > RideConstants.MAX_DETOUR_METERS) {
+            RideRequest rejected = new RideRequest();
+            rejected.setRide(ride);
+            rejected.setPassenger(passenger);
+            rejected.setStatus(RideRequestStatus.REJECTED);
+            rejected.setPassengerDepartureLat(passLat);
+            rejected.setPassengerDepartureLon(passLon);
+            return rideRequestRepository.save(rejected);
+        }
+
+        ride.setSeatsAvailable(ride.getSeatsAvailable() - 1);
+        if (ride.getSeatsAvailable() == 0) {
+            ride.setStatus(RideStatus.FULL);
+        }
+        rideRepository.save(ride);
+
+        RideRequest accepted = new RideRequest();
+        accepted.setRide(ride);
+        accepted.setPassenger(passenger);
+        accepted.setStatus(RideRequestStatus.ACCEPTED);
+        accepted.setPassengerDepartureLat(passLat);
+        accepted.setPassengerDepartureLon(passLon);
+        return rideRequestRepository.save(accepted);
     }
 
 

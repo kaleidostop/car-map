@@ -184,7 +184,35 @@ async function loadRides(officeId = null) {
 }
 
 function joinRide(rideId) {
-    alert('Функция присоединения к поездке будет реализована позже');
+    const lat = prompt('Введите широту вашего местоположения:');
+    const lon = prompt('Введите долготу вашего местоположения:');
+    if (!lat || !lon) return;
+
+    fetchWithAuth('/api/rides/' + rideId + '/join', {
+        method: 'POST',
+        body: JSON.stringify({
+            passengerLat: parseFloat(lat),
+            passengerLon: parseFloat(lon)
+        })
+    })
+    .then(async res => {
+        const text = await res.text();
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            data = { error: text || 'Неизвестная ошибка' };
+        }
+        
+        if (!res.ok) {
+            alert(data.error || 'Ошибка сервера: ' + res.status);
+            return;
+        }
+        alert(data.message || 'Вы присоединились к поездке');
+        loadRides();
+    })
+    .catch(e => alert('Ошибка соединения: ' + e.message));
+
 }
 
 (async function init() {

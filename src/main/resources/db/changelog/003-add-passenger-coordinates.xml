@@ -1,0 +1,14 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="4" author="kaleidostop">
+        <addColumn tableName="ride_requests">
+            <column name="passenger_departure_lat" type="double"/>
+            <column name="passenger_departure_lon" type="double"/>
+            <column name="passenger_departure_address" type="varchar(300)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
