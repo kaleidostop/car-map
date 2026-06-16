@@ -1,11 +1,15 @@
 package kaleidostop.map.car_map.service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +20,7 @@ import kaleidostop.map.car_map.domain.RideRequest;
 import kaleidostop.map.car_map.domain.RideRequestStatus;
 import kaleidostop.map.car_map.domain.RideStatus;
 import kaleidostop.map.car_map.domain.User;
+import kaleidostop.map.car_map.dto.RideRequestDto;
 import kaleidostop.map.car_map.dto.RideResponse;
 import kaleidostop.map.car_map.dto.osrm.RouteInfo;
 import kaleidostop.map.car_map.repository.OfficeRepository;
@@ -30,14 +35,16 @@ public class RideService {
     private final RoutingService routingService;
     private final ObjectMapper objectMapper;
     private final RideRequestRepository rideRequestRepository;
+    private final SimpMessagingTemplate messagingTemplate;
     private static final Logger log = LoggerFactory.getLogger(RideService.class);
 
-    public RideService(RideRepository rideRepository, OfficeRepository officeRepository, RoutingService routingService, RideRequestRepository rideRequestRepository, ObjectMapper objectMapper) {
+    public RideService(RideRepository rideRepository, OfficeRepository officeRepository, RoutingService routingService, RideRequestRepository rideRequestRepository, SimpMessagingTemplate messagingTemplate, ObjectMapper objectMapper) {
         this.rideRepository = rideRepository;
         this.officeRepository = officeRepository;
         this.routingService = routingService;
         this.objectMapper = objectMapper;
         this.rideRequestRepository = rideRequestRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @Transactional
@@ -83,11 +90,9 @@ public class RideService {
     }
 
     @Transactional
-    public RideRequest joinRide(Long rideId, User passenger, double passLat, double passLon) {
+    public Map<String, Object> joinRide(Long rideId, User passenger, double passLat, double passLon) {
         Ride ride = rideRepository.findById(rideId)
                 .orElseThrow(() -> new IllegalArgumentException("Поездка не найдена"));
-        System.out.println(ride.getDriver().getId());
-        System.out.println(passenger.getId());
 
         if (ride.getStatus() != RideStatus.ACTIVE) {
             throw new IllegalStateException("Поездка недоступна для присоединения");
@@ -98,7 +103,7 @@ public class RideService {
         if (ride.getDriver().getId().equals(passenger.getId())) {
             throw new IllegalArgumentException("Нельзя присоединиться к своей поездке");
         }
-        if (rideRequestRepository.existsByRideAndPassengerAndStatus(ride, passenger, RideRequestStatus.ACCEPTED)) {
+        if (rideRequestRepository.existsByRideAndPassengerAndStatusIn(ride, passenger, List.of(RideRequestStatus.ACCEPTED, RideRequestStatus.PENDING))) {
             throw new IllegalArgumentException("Вы уже отправили запрос на эту поездку");
         }
 
@@ -121,24 +126,104 @@ public class RideService {
             rejected.setStatus(RideRequestStatus.REJECTED);
             rejected.setPassengerDepartureLat(passLat);
             rejected.setPassengerDepartureLon(passLon);
-            return rideRequestRepository.save(rejected);
+
+            rideRequestRepository.save(rejected);
+
+            return Map.of(
+                "status", "REJECTED",
+                "message", "Запрос отклонён: превышено допустимое добавочное расстояние"
+            );
         }
 
-        ride.setSeatsAvailable(ride.getSeatsAvailable() - 1);
-        if (ride.getSeatsAvailable() == 0) {
-            ride.setStatus(RideStatus.FULL);
+        long pendingCount = rideRequestRepository.countByRideIdAndStatus(rideId, RideRequestStatus.PENDING);
+        String warning = null;
+        if (pendingCount >= ride.getSeatsAvailable()) {
+            warning = "Внимание: количество ожидающих заявок (" + pendingCount +
+                      ") уже равно или превышает число свободных мест (" +
+                      ride.getSeatsAvailable() + "). Ваш запрос может быть не удовлетворён.";
         }
-        rideRepository.save(ride);
 
-        RideRequest accepted = new RideRequest();
-        accepted.setRide(ride);
-        accepted.setPassenger(passenger);
-        accepted.setStatus(RideRequestStatus.ACCEPTED);
-        accepted.setPassengerDepartureLat(passLat);
-        accepted.setPassengerDepartureLon(passLon);
-        return rideRequestRepository.save(accepted);
+        RideRequest pending = new RideRequest();
+        pending.setRide(ride);
+        pending.setPassenger(passenger);
+        pending.setStatus(RideRequestStatus.PENDING);
+        pending.setPassengerDepartureLat(passLat);
+        pending.setPassengerDepartureLon(passLon);
+        rideRequestRepository.save(pending);
+
+        messagingTemplate.convertAndSendToUser(
+                ride.getDriver().getEmail(),
+                "/queue/requests",
+                Map.of(
+                    "rideId", ride.getId(),
+                    "passengerName", passenger.getFullName(),
+                    "message", "Новый запрос от " + passenger.getFullName()
+                )
+        );
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("status", "PENDING");
+        result.put("message", "Заявка отправлена водителю");
+        if (warning != null) {
+            result.put("warning", warning);
+        }
+        return result;
     }
 
+    public List<RideRequestDto> getPendingRequests(Long rideId, User driver) {
+        Ride ride = rideRepository.findById(rideId)
+                .orElseThrow(() -> new IllegalArgumentException("Поездка не найдена"));
+        if (!ride.getDriver().getId().equals(driver.getId())) {
+            throw new AccessDeniedException("Вы не водитель этой поездки");
+        }
+        List<RideRequest> requests = rideRequestRepository.findPendingRequestsByRideId(rideId);
+        return requests.stream()
+                .map(r -> new RideRequestDto(r.getId(), r.getPassenger().getFullName(),
+                        r.getPassengerDepartureLat(), r.getPassengerDepartureLon()))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public Map<String, Object> handleRequest(Long rideId, Long requestId, String action, User driver) {
+        RideRequest request = rideRequestRepository.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Заявка не найдена"));
+        Ride ride = request.getRide();
+        if (!ride.getId().equals(rideId)) {
+            throw new IllegalArgumentException("Несоответствие поездки");
+        }
+        if (!ride.getDriver().getId().equals(driver.getId())) {
+            throw new AccessDeniedException("Вы не водитель этой поездки");
+        }
+        if (!RideRequestStatus.PENDING.equals(request.getStatus())) {
+            throw new IllegalStateException("Заявка уже обработана");
+        }
+        if ("accept".equals(action)) {
+            if (ride.getSeatsAvailable() <= 0) {
+                throw new IllegalStateException("Нет свободных мест");
+            }
+            request.setStatus(RideRequestStatus.ACCEPTED);
+            ride.setSeatsAvailable(ride.getSeatsAvailable() - 1);
+            if (ride.getSeatsAvailable() == 0) {
+                ride.setStatus(RideStatus.FULL);
+            }
+            rideRepository.save(ride);
+        } else if ("reject".equals(action)) {
+            request.setStatus(RideRequestStatus.REJECTED);
+        } else {
+            throw new IllegalArgumentException("Неверное действие");
+        }
+        rideRequestRepository.save(request);
+
+        // Уведомление пассажиру о результате - позже
+
+        return Map.of("status", request.getStatus(), "seatsAvailable", ride.getSeatsAvailable());
+    }
+
+
+    public List<RideResponse> getRidesByDriver(User driver) {
+        List<Ride> rides = rideRepository.findByDriver(driver);
+        return rides.stream().map(this::toResponse).toList();
+    }
 
     @SuppressWarnings("unchecked")
     private RideResponse toResponse(Ride ride) {

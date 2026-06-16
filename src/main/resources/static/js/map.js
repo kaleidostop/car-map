@@ -13,6 +13,7 @@ try {
     const role = payload.role;
     if (role === 'ROLE_DRIVER' || role === 'ROLE_ADMIN') {
         document.getElementById('create-ride-btn').style.display = 'inline-block';
+        document.getElementById('my-rides-btn').style.display = 'inline-block';
     }
     document.getElementById('user-info').textContent = 
         `Вы вошли как: ${payload.sub} (роль: ${role})`;
@@ -208,7 +209,11 @@ function joinRide(rideId) {
             alert(data.error || 'Ошибка сервера: ' + res.status);
             return;
         }
-        alert(data.message || 'Вы присоединились к поездке');
+        let message = data.message || data.error;
+        if (data.warning) {
+            message += '\n' + data.warning;
+        }
+        alert(message);
         loadRides();
     })
     .catch(e => alert('Ошибка соединения: ' + e.message));

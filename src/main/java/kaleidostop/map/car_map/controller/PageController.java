@@ -25,6 +25,11 @@ public class PageController {
         return "create-ride";
     }
 
+    @GetMapping("/my-rides")
+    public String myRides() {
+        return "my-rides";
+    }
+
     @GetMapping("/")
     public String root() {
         return "redirect:/login";
