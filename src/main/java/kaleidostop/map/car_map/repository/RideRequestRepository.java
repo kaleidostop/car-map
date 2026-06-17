@@ -22,4 +22,6 @@ public interface RideRequestRepository extends JpaRepository<RideRequest, Long> 
     List<RideRequest> findPendingRequestsByRideId(@Param("rideId") Long rideId);
 
     long countByRideIdAndStatus(Long rideId, RideRequestStatus status);
+
+    List<RideRequest> findByPassengerOrderByCreatedAtDesc(User passenger);
 }

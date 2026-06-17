@@ -21,6 +21,7 @@ import kaleidostop.map.car_map.domain.RideRequestStatus;
 import kaleidostop.map.car_map.domain.RideStatus;
 import kaleidostop.map.car_map.domain.User;
 import kaleidostop.map.car_map.dto.RideRequestDto;
+import kaleidostop.map.car_map.dto.RideRequestPassengerDto;
 import kaleidostop.map.car_map.dto.RideResponse;
 import kaleidostop.map.car_map.dto.osrm.RouteInfo;
 import kaleidostop.map.car_map.repository.OfficeRepository;
@@ -214,10 +215,42 @@ public class RideService {
         }
         rideRequestRepository.save(request);
 
-        // Уведомление пассажиру о результате - позже
+        String passengerEmail = request.getPassenger().getEmail();
+        String message = action.equals("accept") 
+                ? "Ваша заявка на поездку #" + ride.getId() + " принята!"
+                : "Ваша заявка на поездку #" + ride.getId() + " отклонена.";
+        messagingTemplate.convertAndSendToUser(
+            passengerEmail,
+            "/queue/request-status",
+            Map.of(
+                "requestId", request.getId(),
+                "rideId", ride.getId(),
+                "status", request.getStatus(),
+                "message", message
+            )
+        );
 
         return Map.of("status", request.getStatus(), "seatsAvailable", ride.getSeatsAvailable());
     }
+
+    public List<RideRequestPassengerDto> getRequestsForPassenger(User passenger) {
+    List<RideRequest> requests = rideRequestRepository.findByPassengerOrderByCreatedAtDesc(passenger);
+    return requests.stream().map(r -> {
+        Ride ride = r.getRide();
+        return new RideRequestPassengerDto(
+                r.getId(),
+                ride.getId(),
+                ride.getDepartureAddress(),
+                ride.getOffice().getName(),
+                ride.getDepartureTime(),
+                r.getStatus(),
+                r.getPassengerDepartureLat() != null ? r.getPassengerDepartureLat() : 0.0,
+                r.getPassengerDepartureLon() != null ? r.getPassengerDepartureLon() : 0.0,
+                ride.getDriver().getFullName(),
+                ride.getSeatsAvailable()
+        );
+    }).collect(Collectors.toList());
+}
 
 
     public List<RideResponse> getRidesByDriver(User driver) {

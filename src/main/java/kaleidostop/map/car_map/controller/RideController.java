@@ -17,8 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import kaleidostop.map.car_map.domain.Ride;
-import kaleidostop.map.car_map.domain.RideRequest;
-import kaleidostop.map.car_map.domain.RideRequestStatus;
 import kaleidostop.map.car_map.domain.User;
 import kaleidostop.map.car_map.dto.CreateRideRequest;
 import kaleidostop.map.car_map.dto.JoinRideRequest;

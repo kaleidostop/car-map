@@ -30,6 +30,11 @@ public class PageController {
         return "my-rides";
     }
 
+    @GetMapping("/my-requests")
+    public String myRequestsPage() {
+        return "my-requests";
+    }
+
     @GetMapping("/")
     public String root() {
         return "redirect:/login";
