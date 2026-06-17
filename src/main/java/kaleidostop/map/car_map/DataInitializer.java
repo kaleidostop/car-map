@@ -9,16 +9,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import kaleidostop.map.car_map.domain.Office;
-import kaleidostop.map.car_map.domain.Ride;
-import kaleidostop.map.car_map.domain.Role;
-import kaleidostop.map.car_map.domain.User;
-import kaleidostop.map.car_map.dto.osrm.RouteInfo;
-import kaleidostop.map.car_map.repository.OfficeRepository;
-import kaleidostop.map.car_map.repository.RideRepository;
-import kaleidostop.map.car_map.repository.UserRepository;
-import kaleidostop.map.car_map.service.RideService;
-import kaleidostop.map.car_map.service.RoutingService;
+import kaleidostop.map.car_map.modules.office.domain.Office;
+import kaleidostop.map.car_map.modules.office.repository.OfficeRepository;
+import kaleidostop.map.car_map.modules.ride.domain.Ride;
+import kaleidostop.map.car_map.modules.ride.repository.RideRepository;
+import kaleidostop.map.car_map.modules.ride.service.RideService;
+import kaleidostop.map.car_map.modules.routing.dto.RouteInfo;
+import kaleidostop.map.car_map.modules.routing.service.RoutingService;
+import kaleidostop.map.car_map.modules.user.domain.Role;
+import kaleidostop.map.car_map.modules.user.domain.User;
+import kaleidostop.map.car_map.modules.user.repository.UserRepository;
 import tools.jackson.databind.ObjectMapper;
 
 @Component
