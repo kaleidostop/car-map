@@ -5,6 +5,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class PageController {
+    @GetMapping("/")
+    public String root() {
+        return "redirect:/login";
+    }
+
     @GetMapping("/login")
     public String loginPage() {
         return "login";  
@@ -35,8 +40,8 @@ public class PageController {
         return "my-requests";
     }
 
-    @GetMapping("/")
-    public String root() {
-        return "redirect:/login";
+    @GetMapping("/admin/offices")
+    public String adminOfficesPage() {
+        return "admin-offices";
     }
 }

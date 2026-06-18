@@ -119,8 +119,6 @@ public class DataInitializer implements CommandLineRunner {
             officeRepository.save(o3);
         }
 
-        // rideRepository.deleteLastEntity();
-
         List<Ride> ridesWithoutRoute = rideRepository.findAll()
         .stream()
         .filter(r -> r.getRoutePolyline() == null)
@@ -142,6 +140,5 @@ public class DataInitializer implements CommandLineRunner {
                 rideRepository.save(ride);
             }
         }
-
     }
 }

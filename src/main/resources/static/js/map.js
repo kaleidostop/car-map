@@ -11,6 +11,9 @@ if (!token) {
 try {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const role = payload.role;
+    if (payload.role === 'ROLE_ADMIN') {
+        document.getElementById('admin-link').style.display = 'inline-block';
+    }
     if (role === 'ROLE_DRIVER' || role === 'ROLE_ADMIN') {
         document.getElementById('create-ride-btn').style.display = 'inline-block';
         document.getElementById('my-rides-btn').style.display = 'inline-block';
