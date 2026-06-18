@@ -2,6 +2,12 @@ const DEFAULT_CENTER = [59.939, 30.316];  // центр Санкт-Петерб�
 const DEFAULT_ZOOM = 12;
 let officeMarkers = []; 
 let rideMarkers = [];
+let selectedRideId = null;
+let selectedLayers = []; 
+
+let pickMode = false;
+let pickModeCallback = null;
+let tempMarker = null;
 
 const token = localStorage.getItem('jwt_token');
 if (!token) {
@@ -39,6 +45,100 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
 }).addTo(map);
 
+
+function enterPickMode(callback) {
+    pickMode = true;
+    pickModeCallback = callback;
+    map.getContainer().style.cursor = 'crosshair';
+    document.getElementById('pick-controls').style.display = 'block';
+    document.getElementById('pick-instruction').textContent = 'Кликните по карте, чтобы выбрать точку';
+}
+
+function exitPickMode() {
+    pickMode = false;
+    pickModeCallback = null;
+    map.getContainer().style.cursor = '';
+    document.getElementById('pick-controls').style.display = 'none';
+    if (tempMarker) {
+        map.removeLayer(tempMarker);
+        tempMarker = null;
+    }
+}
+
+map.on('click', function(e) {
+    if (!pickMode) return;
+    const latlng = e.latlng;
+    if (tempMarker) {
+        tempMarker.setLatLng(latlng);
+    } else {
+        tempMarker = L.marker(latlng, {
+            icon: L.icon({
+                iconUrl: '../img/marker-icon-2x-red.png',
+                shadowUrl: '../img/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            })
+        }).addTo(map);
+    }
+    document.getElementById('pick-instruction').textContent = 'Точка выбрана. Можно подтвердить или кликнуть ещё раз.';
+});
+
+const urlParams = new URLSearchParams(window.location.search);
+const pickModeParam = urlParams.get('mode');
+const returnUrl = urlParams.get('returnUrl');
+
+const initLat = parseFloat(urlParams.get('lat'));
+const initLng = parseFloat(urlParams.get('lng'));
+if (!isNaN(initLat) && !isNaN(initLng)) {
+    map.setView([initLat, initLng], 15);
+}
+
+if (pickModeParam && returnUrl) {
+    enterPickMode(async function(lat, lng) {
+        let address = '';
+        try {
+            const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+            const data = await resp.json();
+            address = data.display_name || `${lat}, ${lng}`;
+        } catch(e) {
+            address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        }
+        const pickedData = { lat, lng, address };
+        sessionStorage.setItem('pickedCoordinates', JSON.stringify(pickedData));
+        window.location.href = returnUrl;
+    });
+    document.getElementById('pick-cancel-btn').onclick = function() {
+        exitPickMode();
+        window.location.href = returnUrl; 
+    };
+}
+
+document.getElementById('pick-confirm-btn').addEventListener('click', function() {
+    if (!tempMarker) {
+        alert('Пожалуйста, сначала кликните по карте, чтобы выбрать точку.');
+        return;
+    }
+    const latlng = tempMarker.getLatLng();
+    const callback = pickModeCallback; 
+    exitPickMode();
+    if (callback) {
+        callback(latlng.lat, latlng.lng);
+    }
+});
+
+document.getElementById('pick-cancel-btn').addEventListener('click', function() {
+    exitPickMode();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && pickMode) {
+        exitPickMode();
+    }
+});
+
+
 async function loadOffices() {
     const response = await fetchWithAuth('/api/offices');
     if (!response.ok) {
@@ -65,13 +165,10 @@ async function loadOffices() {
     });
 
     filterSelect.addEventListener('change', () => {
+        if (pickMode) return;  
         loadRides(filterSelect.value);
     });
 }
-
-
-let selectedRideId = null;
-let selectedLayers = []; 
 
 async function loadRides(officeId = null) {
     let url = '/api/rides';
@@ -108,8 +205,8 @@ async function loadRides(officeId = null) {
 
         const startMarker = L.marker([ride.departureLat, ride.departureLon], {
             icon: L.icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                iconUrl: '../img/marker-icon-2x-green.png',
+                shadowUrl: '../img/marker-shadow.png',
                 iconSize: [25, 41],
                 iconAnchor: [12, 41],
                 popupAnchor: [1, -34],
@@ -152,9 +249,20 @@ async function loadRides(officeId = null) {
             if (rideItem) rideItem.classList.add('active');
         };
 
-        startMarker.on('click', selectThisRide);
+        startMarker.on('click', function(e) {
+            if (pickMode) {
+                this.closePopup();    
+                return;
+            }        
+            selectThisRide();
+        });
+
         if (polyline.on) {
             polyline.on('click',  function(e) {
+                if (pickMode) {
+                    this.closePopup();    
+                    return;
+                }       
                 selectThisRide();   
                 this.openPopup(e.latlng);  
             });
@@ -176,7 +284,10 @@ async function loadRides(officeId = null) {
             <small>${new Date(ride.departureTime).toLocaleString()}</small><br>
             Свободных мест: <span class="badge bg-success">${ride.seatsAvailable}</span>
         `;
-        li.addEventListener('click', selectThisRide);
+        li.addEventListener('click', function(e) {
+            if (pickMode) return;
+            selectThisRide();
+        });
         rideList.appendChild(li);
     });
 
@@ -188,39 +299,36 @@ async function loadRides(officeId = null) {
 }
 
 function joinRide(rideId) {
-    const lat = prompt('Введите широту вашего местоположения:');
-    const lon = prompt('Введите долготу вашего местоположения:');
-    if (!lat || !lon) return;
-
-    fetchWithAuth('/api/rides/' + rideId + '/join', {
-        method: 'POST',
-        body: JSON.stringify({
-            passengerLat: parseFloat(lat),
-            passengerLon: parseFloat(lon)
-        })
-    })
-    .then(async res => {
-        const text = await res.text();
-        let data;
+    enterPickMode(async function(lat, lng) {
         try {
-            data = JSON.parse(text);
-        } catch (e) {
-            data = { error: text || 'Неизвестная ошибка' };
+            const response = await fetchWithAuth(`/api/rides/${rideId}/join`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    passengerLat: lat,
+                    passengerLon: lng
+                })
+            });
+            const text = await response.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                data = { error: text || 'Неизвестная ошибка' };
+            }
+            if (!response.ok) {
+                alert(data.error || 'Ошибка при отправке заявки');
+            } else {
+                let message = data.message || 'Заявка отправлена';
+                if (data.warning) {
+                    message += '\n' + data.warning;
+                }
+                alert(message);
+                loadRides();
+            }
+        } catch (err) {
+            alert('Ошибка соединения: ' + err.message);
         }
-        
-        if (!res.ok) {
-            alert(data.error || 'Ошибка сервера: ' + res.status);
-            return;
-        }
-        let message = data.message || data.error;
-        if (data.warning) {
-            message += '\n' + data.warning;
-        }
-        alert(message);
-        loadRides();
-    })
-    .catch(e => alert('Ошибка соединения: ' + e.message));
-
+    });
 }
 
 (async function init() {

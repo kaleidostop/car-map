@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Управление офисами – CarMap</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+
 </head>
 <body>
     <nav class="navbar navbar-dark bg-dark">
@@ -39,22 +41,16 @@
                             <input type="text" class="form-control" id="office-name" required>
                         </div>
                         <div class="mb-3">
-                            <label for="office-address" class="form-label">Адрес</label>
+                            <label class="form-label">Расположение</label>
                             <input type="text" class="form-control" id="office-address" required>
+                            <button type="button" class="btn btn-outline-secondary" id="pick-office-btn">Указать на карте</button>
+                            <div id="officeCoords" class="form-text text-muted"></div>
+                            <input type="hidden" id="office-lat">
+                            <input type="hidden" id="office-lon">
                         </div>
-                        <div class="mb-3">
-                            <label for="office-lat" class="form-label">Широта</label>
-                            <input type="number" step="any" class="form-control" id="office-lat" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="office-lon" class="form-label">Долгота</label>
-                            <input type="number" step="any" class="form-control" id="office-lon" required>
-                        </div>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-primary" id="save-office-btn">Сохранить</button>
                     </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="button" class="btn btn-primary" id="save-office-btn">Сохранить</button>
                 </div>
             </div>
         </div>
@@ -78,7 +74,9 @@
         </div>
     </div>
 
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
     <script src="/js/auth-helper.js"></script>
     <script src="/js/admin-offices.js"></script>
 </body>
