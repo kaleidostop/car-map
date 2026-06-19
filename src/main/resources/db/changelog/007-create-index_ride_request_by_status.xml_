@@ -1,0 +1,18 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="8-create-index-ride-requests-ride-status" author="kaleidostop">
+        <preConditions onFail="CONTINUE">
+            <not>
+                <indexExists indexName="idx_ride_requests_ride_id_status"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="ride_requests" indexName="idx_ride_requests_ride_id_status">
+            <column name="ride_id"/>
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

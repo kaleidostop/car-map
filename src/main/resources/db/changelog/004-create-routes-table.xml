@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="5" author="kaleidostop">
+        <!-- Маршруты -->
+        <createTable tableName="routes">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="polyline" type="text"/>
+            <column name="distance_meters" type="double"/>
+            <column name="duration_seconds" type="double"/>
+            <column name="created_at" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <addColumn tableName="rides">
+            <column name="route_id" type="bigint">
+                <constraints foreignKeyName="fk_rides_route" references="routes(id)"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="ride_requests">
+            <column name="route_id" type="bigint">
+                <constraints foreignKeyName="fk_ride_requests_route" references="routes(id)"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

@@ -3,8 +3,6 @@ package kaleidostop.map.car_map.modules.ride.repository;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import kaleidostop.map.car_map.modules.ride.domain.Ride;
 import kaleidostop.map.car_map.modules.ride.domain.RideRequest;
@@ -18,8 +16,7 @@ public interface RideRequestRepository extends JpaRepository<RideRequest, Long> 
 
     boolean existsByRideAndPassengerAndStatusIn(Ride ride, User passenger, List<RideRequestStatus> statuses);
 
-    @Query("SELECT r FROM RideRequest r WHERE r.ride.id = :rideId AND r.status = 'PENDING'")
-    List<RideRequest> findPendingRequestsByRideId(@Param("rideId") Long rideId);
+    List<RideRequest> findByRideIdAndStatus(Long rideId, RideRequestStatus status);
 
     long countByRideIdAndStatus(Long rideId, RideRequestStatus status);
 

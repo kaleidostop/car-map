@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import kaleidostop.map.car_map.modules.routing.domain.Route;
 import kaleidostop.map.car_map.modules.user.domain.User;
 
 @Entity
@@ -37,6 +38,9 @@ public class RideRequest {
     private String passengerDepartureAddress;
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "route_id")
+    private Route route;
 
     public Long getId() {
         return id;
@@ -100,5 +104,11 @@ public class RideRequest {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+    public Route getRoute() {
+        return route;
+    }
+    public void setRoute(Route route) {
+        this.route = route;
     }
 }

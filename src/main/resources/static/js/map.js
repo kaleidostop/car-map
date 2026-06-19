@@ -66,24 +66,48 @@ function exitPickMode() {
 }
 
 map.on('click', function(e) {
-    if (!pickMode) return;
-    const latlng = e.latlng;
-    if (tempMarker) {
-        tempMarker.setLatLng(latlng);
+    if (pickMode) {
+        const latlng = e.latlng;
+        if (tempMarker) {
+            tempMarker.setLatLng(latlng);
+        } else {
+            tempMarker = L.marker(latlng, {
+                icon: L.icon({
+                    iconUrl: '../img/marker-icon-2x-red.png',
+                    shadowUrl: '../img/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                })
+            }).addTo(map);
+        }
+        document.getElementById('pick-instruction').textContent = 'Точка выбрана. Можно подтвердить или кликнуть ещё раз.';
     } else {
-        tempMarker = L.marker(latlng, {
-            icon: L.icon({
-                iconUrl: '../img/marker-icon-2x-red.png',
-                shadowUrl: '../img/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-            })
-        }).addTo(map);
+        clearSelection();
     }
-    document.getElementById('pick-instruction').textContent = 'Точка выбрана. Можно подтвердить или кликнуть ещё раз.';
 });
+
+function clearSelection() {
+    if (selectedLayers.length) {
+        selectedLayers.forEach(layer => {
+            if (layer.setStyle && !layer.setLatLng) {
+                layer.setStyle({ color: '#999', weight: 4 });
+            }
+        });
+    }
+
+    rideMarkers.forEach(layer => {
+        if (layer._rideId !== undefined) {
+            map.removeLayer(layer);
+        }
+    });
+
+    document.querySelectorAll('#ride-list .list-group-item').forEach(el => el.classList.remove('active'));
+    
+    selectedRideId = null;
+    selectedLayers = [];
+}
 
 const urlParams = new URLSearchParams(window.location.search);
 const pickModeParam = urlParams.get('mode');
@@ -214,6 +238,24 @@ async function loadRides(officeId = null) {
             })
         }).bindPopup(popupContent);
 
+        if (ride.passengers && ride.passengers.length > 0) {
+            ride.passengers.forEach(p => {
+                const passengerMarker = L.marker([p.lat, p.lng], {
+                    icon: L.icon({
+                        iconUrl: '../img/marker-icon-2x-yellow.png',
+                        shadowUrl: '../img/marker-shadow.png',
+                        iconSize: [25, 41],
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34],
+                        shadowSize: [41, 41]
+                    })
+                }).bindPopup(`<b>Посадка пассажира</b><br>${p.name}`);
+
+                passengerMarker._rideId = ride.id;
+                rideMarkers.push(passengerMarker);
+            });
+        }
+
         let polyline;
         if (ride.routeGeometry) {
             polyline = L.geoJSON(ride.routeGeometry, {
@@ -227,16 +269,11 @@ async function loadRides(officeId = null) {
         }
 
         const selectThisRide = () => {
-            if (selectedLayers.length) {
-                selectedLayers.forEach(layer => {
-                    if (layer instanceof L.Marker) {
-                    } else {
-                        layer.setStyle({ color: '#999', weight: 5 });
-                    }
-                });
-            }
+            clearSelection();
+
             selectedRideId = ride.id;
             selectedLayers = [startMarker, polyline];
+
             if (polyline.setStyle) {
                 polyline.setStyle({ color: 'green', weight: 6 });
                 polyline.bringToFront();
@@ -244,6 +281,15 @@ async function loadRides(officeId = null) {
             if (startMarker.bringToFront) {
                 startMarker.bringToFront(); 
             }
+            rideMarkers.forEach(layer => {
+                if (layer._rideId === ride.id) {
+                    layer.addTo(map);
+                    if (layer.bringToFront) {
+                        layer.bringToFront();
+                    }
+                }
+            });
+
             document.querySelectorAll('#ride-list .list-group-item').forEach(el => el.classList.remove('active'));
             const rideItem = document.getElementById('ride-item-' + ride.id);
             if (rideItem) rideItem.classList.add('active');

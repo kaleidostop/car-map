@@ -2,8 +2,6 @@ package kaleidostop.map.car_map;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -13,13 +11,13 @@ import kaleidostop.map.car_map.modules.office.domain.Office;
 import kaleidostop.map.car_map.modules.office.repository.OfficeRepository;
 import kaleidostop.map.car_map.modules.ride.domain.Ride;
 import kaleidostop.map.car_map.modules.ride.repository.RideRepository;
-import kaleidostop.map.car_map.modules.ride.service.RideService;
+import kaleidostop.map.car_map.modules.routing.domain.Route;
 import kaleidostop.map.car_map.modules.routing.dto.RouteInfo;
+import kaleidostop.map.car_map.modules.routing.service.RouteService;
 import kaleidostop.map.car_map.modules.routing.service.RoutingService;
 import kaleidostop.map.car_map.modules.user.domain.Role;
 import kaleidostop.map.car_map.modules.user.domain.User;
 import kaleidostop.map.car_map.modules.user.repository.UserRepository;
-import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -27,16 +25,15 @@ public class DataInitializer implements CommandLineRunner {
     private final OfficeRepository officeRepository;
     private final RideRepository rideRepository;
     private final RoutingService routingService;
-    private final ObjectMapper objectMapper;
+    private final RouteService routeService;
     private final PasswordEncoder passwordEncoder;
-    private static final Logger log = LoggerFactory.getLogger(RideService.class);
 
-    public DataInitializer(UserRepository userRepository, OfficeRepository officeRepository, RideRepository rideRepository, RoutingService routingService, ObjectMapper objectMapper, PasswordEncoder passwordEncoder) {
+    public DataInitializer(UserRepository userRepository, OfficeRepository officeRepository, RideRepository rideRepository, RoutingService routingService, RouteService routeService, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.officeRepository = officeRepository;
         this.rideRepository = rideRepository;
         this.routingService = routingService;
-        this.objectMapper = objectMapper;
+        this.routeService = routeService;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -121,24 +118,28 @@ public class DataInitializer implements CommandLineRunner {
 
         List<Ride> ridesWithoutRoute = rideRepository.findAll()
         .stream()
-        .filter(r -> r.getRoutePolyline() == null)
+        .filter(r -> r.getRoute() == null)
         .toList();
 
-        for (Ride ride : ridesWithoutRoute) {
-            RouteInfo info = routingService.getRoute(
-                    ride.getDepartureLon(), ride.getDepartureLat(),
-                    ride.getOffice().getLongitude(), ride.getOffice().getLatitude()
-            );
-            if (info != null) {
-                ride.setDistanceMeters(info.getDistanceMeters());
-                ride.setDurationSeconds(info.getDurationSeconds());
-                try {
-                    ride.setRoutePolyline(objectMapper.writeValueAsString(info.getGeometry()));
-                } catch (Exception e) {
-                    log.warn("Failed to serialize route geometry for ride {}", ride.getId(), e);
+        try {
+            for (Ride ride : ridesWithoutRoute) {
+                RouteInfo info = routingService.getRoute(
+                        ride.getDepartureLon(), ride.getDepartureLat(),
+                        ride.getOffice().getLongitude(), ride.getOffice().getLatitude()
+                );
+                if (info != null && info.getGeometry() != null) {
+                    Route route = routeService.createRoute(
+                            info.getGeometry(),
+                            info.getDistanceMeters(),
+                            info.getDurationSeconds()
+                    );
+                    ride.setRoute(route);
+                    rideRepository.save(ride);
                 }
-                rideRepository.save(ride);
+                Thread.sleep(1000);
             }
-        }
+        } catch (InterruptedException e) {
+                Thread.currentThread().interrupt(); 
+            }
     }
 }

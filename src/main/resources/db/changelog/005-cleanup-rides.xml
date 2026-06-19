@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="5-drop-distance-duration" author="kaleidostop">
+        <preConditions onFail="CONTINUE">
+            <columnExists tableName="rides" columnName="distance_meters"/>
+            <columnExists tableName="rides" columnName="duration_seconds"/>
+        </preConditions>
+        <dropColumn tableName="rides" columnName="distance_meters"/>
+        <dropColumn tableName="rides" columnName="duration_seconds"/>
+    </changeSet>
+
+    <changeSet id="5-drop-route-polyline" author="kaleidostop">
+        <preConditions onFail="CONTINUE">
+            <columnExists tableName="rides" columnName="route_polyline"/>
+        </preConditions>
+        <dropColumn tableName="rides" columnName="route_polyline"/>
+    </changeSet>
+</databaseChangeLog>

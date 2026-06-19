@@ -1,0 +1,15 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="6-create-indices" author="kaleidostop">
+        <createIndex tableName="rides" indexName="idx_rides_route_id">
+            <column name="route_id"/>
+        </createIndex>
+        <createIndex tableName="ride_requests" indexName="idx_ride_requests_route_id">
+            <column name="route_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

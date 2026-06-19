@@ -1,6 +1,7 @@
 package kaleidostop.map.car_map.modules.ride.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +26,9 @@ import kaleidostop.map.car_map.modules.ride.dto.RideRequestPassengerDto;
 import kaleidostop.map.car_map.modules.ride.dto.RideResponse;
 import kaleidostop.map.car_map.modules.ride.repository.RideRepository;
 import kaleidostop.map.car_map.modules.ride.repository.RideRequestRepository;
+import kaleidostop.map.car_map.modules.routing.domain.Route;
 import kaleidostop.map.car_map.modules.routing.dto.RouteInfo;
+import kaleidostop.map.car_map.modules.routing.service.RouteService;
 import kaleidostop.map.car_map.modules.routing.service.RoutingService;
 import kaleidostop.map.car_map.modules.user.domain.User;
 import tools.jackson.databind.ObjectMapper;
@@ -35,15 +38,17 @@ public class RideService {
     private final RideRepository rideRepository;
     private final OfficeRepository officeRepository;
     private final RoutingService routingService;
+    private final RouteService routeService;
     private final ObjectMapper objectMapper;
     private final RideRequestRepository rideRequestRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private static final Logger log = LoggerFactory.getLogger(RideService.class);
 
-    public RideService(RideRepository rideRepository, OfficeRepository officeRepository, RoutingService routingService, RideRequestRepository rideRequestRepository, SimpMessagingTemplate messagingTemplate, ObjectMapper objectMapper) {
+    public RideService(RideRepository rideRepository, OfficeRepository officeRepository, RoutingService routingService, RouteService routeService, RideRequestRepository rideRequestRepository, SimpMessagingTemplate messagingTemplate, ObjectMapper objectMapper) {
         this.rideRepository = rideRepository;
         this.officeRepository = officeRepository;
         this.routingService = routingService;
+        this.routeService = routeService;
         this.objectMapper = objectMapper;
         this.rideRequestRepository = rideRequestRepository;
         this.messagingTemplate = messagingTemplate;
@@ -69,13 +74,15 @@ public class RideService {
 
         RouteInfo routeInfo = routingService.getRoute(
             depLon, depLat, office.getLongitude(), office.getLatitude());
-        if (routeInfo != null) {
-            ride.setDistanceMeters(routeInfo.getDistanceMeters());
-            ride.setDurationSeconds(routeInfo.getDurationSeconds());
-            ride.setRoutePolyline(toJson(routeInfo.getGeometry())); 
+        if (routeInfo != null && routeInfo.getGeometry() != null) {
+            Route route = routeService.createRoute(
+                routeInfo.getGeometry(),
+                routeInfo.getDistanceMeters(),
+                routeInfo.getDurationSeconds()
+            );
+            ride.setRoute(route);
         } else {
-            ride.setDistanceMeters(0.0);
-            ride.setDurationSeconds(0.0);
+            ride.setRoute(null);
         }
 
         return rideRepository.save(ride);
@@ -109,7 +116,6 @@ public class RideService {
             throw new IllegalArgumentException("Вы уже отправили запрос на эту поездку");
         }
 
-        double originalDistance = ride.getDistanceMeters() != null ? ride.getDistanceMeters() : 0.0;
         RouteInfo detourInfo = routingService.getRoute(
                 ride.getDepartureLon(), ride.getDepartureLat(),
                 passLon, passLat,
@@ -119,6 +125,7 @@ public class RideService {
             throw new RuntimeException("Не удалось рассчитать маршрут с пассажиром");
         }
 
+        double originalDistance = ride.getRoute() != null && ride.getRoute().getDistanceMeters() != null ? ride.getRoute().getDistanceMeters() : 0.0;
         double newDistance = detourInfo.getDistanceMeters();
         double detour = newDistance - originalDistance;
         if (detour > RideConstants.MAX_DETOUR_METERS) {
@@ -151,6 +158,13 @@ public class RideService {
         pending.setStatus(RideRequestStatus.PENDING);
         pending.setPassengerDepartureLat(passLat);
         pending.setPassengerDepartureLon(passLon);
+        Route new_route = routeService.createRoute(
+            detourInfo.getGeometry(),
+            detourInfo.getDistanceMeters(),
+            detourInfo.getDurationSeconds()
+        );
+        pending.setRoute(new_route);
+
         rideRequestRepository.save(pending);
 
         messagingTemplate.convertAndSendToUser(
@@ -178,7 +192,7 @@ public class RideService {
         if (!ride.getDriver().getId().equals(driver.getId())) {
             throw new AccessDeniedException("Вы не водитель этой поездки");
         }
-        List<RideRequest> requests = rideRequestRepository.findPendingRequestsByRideId(rideId);
+        List<RideRequest> requests = rideRequestRepository.findByRideIdAndStatus(rideId, RideRequestStatus.PENDING);
         return requests.stream()
                 .map(r -> new RideRequestDto(r.getId(), r.getPassenger().getFullName(),
                         r.getPassengerDepartureLat(), r.getPassengerDepartureLon()))
@@ -208,7 +222,16 @@ public class RideService {
             if (ride.getSeatsAvailable() == 0) {
                 ride.setStatus(RideStatus.FULL);
             }
+            Route requestRoute = request.getRoute();
+            if (requestRoute != null) {
+                ride.setRoute(requestRoute);
+            }
+            ride.setSeatsAvailable(ride.getSeatsAvailable() - 1);
+            if (ride.getSeatsAvailable() == 0) {
+                ride.setStatus(RideStatus.FULL);
+            }
             rideRepository.save(ride);
+
         } else if ("reject".equals(action)) {
             request.setStatus(RideRequestStatus.REJECTED);
         } else {
@@ -235,24 +258,23 @@ public class RideService {
     }
 
     public List<RideRequestPassengerDto> getRequestsForPassenger(User passenger) {
-    List<RideRequest> requests = rideRequestRepository.findByPassengerOrderByCreatedAtDesc(passenger);
-    return requests.stream().map(r -> {
-        Ride ride = r.getRide();
-        return new RideRequestPassengerDto(
-                r.getId(),
-                ride.getId(),
-                ride.getDepartureAddress(),
-                ride.getOffice().getName(),
-                ride.getDepartureTime(),
-                r.getStatus(),
-                r.getPassengerDepartureLat() != null ? r.getPassengerDepartureLat() : 0.0,
-                r.getPassengerDepartureLon() != null ? r.getPassengerDepartureLon() : 0.0,
-                ride.getDriver().getFullName(),
-                ride.getSeatsAvailable()
-        );
-    }).collect(Collectors.toList());
-}
-
+        List<RideRequest> requests = rideRequestRepository.findByPassengerOrderByCreatedAtDesc(passenger);
+        return requests.stream().map(r -> {
+            Ride ride = r.getRide();
+            return new RideRequestPassengerDto(
+                    r.getId(),
+                    ride.getId(),
+                    ride.getDepartureAddress(),
+                    ride.getOffice().getName(),
+                    ride.getDepartureTime(),
+                    r.getStatus(),
+                    r.getPassengerDepartureLat() != null ? r.getPassengerDepartureLat() : 0.0,
+                    r.getPassengerDepartureLon() != null ? r.getPassengerDepartureLon() : 0.0,
+                    ride.getDriver().getFullName(),
+                    ride.getSeatsAvailable()
+            );
+        }).collect(Collectors.toList());
+    }
 
     public List<RideResponse> getRidesByDriver(User driver) {
         List<Ride> rides = rideRepository.findByDriver(driver);
@@ -262,15 +284,29 @@ public class RideService {
     @SuppressWarnings("unchecked")
     private RideResponse toResponse(Ride ride) {
         Map<String, Object> geometry = null;
-        if (ride.getRoutePolyline() != null) {
-            try {
-                geometry = objectMapper.readValue(
-                    ride.getRoutePolyline(),
-                    Map.class
-                );
-            } catch (Exception e) {
-                log.warn("Failed to parse route geometry for ride {}", ride.getId(), e);
+        double distance = 0.0;
+        double duration = 0.0;
+        if (ride.getRoute() != null) {
+            distance = ride.getRoute().getDistanceMeters() != null ? ride.getRoute().getDistanceMeters() : 0.0;
+            duration = ride.getRoute().getDurationSeconds() != null ? ride.getRoute().getDurationSeconds() : 0.0;
+            if (ride.getRoute().getPolyline() != null) {
+                try {
+                    geometry = objectMapper.readValue(ride.getRoute().getPolyline(), Map.class);
+                } catch (Exception e) {
+                    log.warn("Failed to parse route geometry for ride {}", ride.getId(), e);
+                }
             }
+        }
+
+        List<RideRequest> acceptedRequests = rideRequestRepository.findByRideIdAndStatus(ride.getId(), RideRequestStatus.ACCEPTED);
+
+        List<Map<String, Object>> passengers = new ArrayList<>();
+        for (RideRequest req : acceptedRequests) {
+            Map<String, Object> p = new HashMap<>();
+            p.put("lat", req.getPassengerDepartureLat());
+            p.put("lng", req.getPassengerDepartureLon());
+            p.put("name", req.getPassenger().getFullName());
+            passengers.add(p);
         }
 
         return new RideResponse(
@@ -286,17 +322,10 @@ public class RideService {
             ride.getSeatsTotal(),
             ride.getSeatsAvailable(),
             ride.getStatus().name(),
-            ride.getDistanceMeters() != null ? ride.getDistanceMeters() : 0.0,
-            ride.getDurationSeconds() != null ? ride.getDurationSeconds() : 0.0,
-            geometry
+            distance,
+            duration,
+            geometry,
+            passengers
         );
-    }
-
-    private String toJson(Object obj) {
-        try {
-            return objectMapper.writeValueAsString(obj);
-        } catch (Exception e) {
-            return null;
-        }
     }
 }

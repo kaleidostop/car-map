@@ -12,8 +12,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.PositiveOrZero;
 import kaleidostop.map.car_map.modules.office.domain.Office;
+import kaleidostop.map.car_map.modules.routing.domain.Route;
 import kaleidostop.map.car_map.modules.user.domain.User;
 
 @Entity
@@ -40,13 +40,10 @@ public class Ride {
     private LocalDateTime departureTime;
     private int seatsTotal;
     private int seatsAvailable;
-    private String routePolyline;
 
-    @PositiveOrZero
-    private Double distanceMeters;
-
-    @PositiveOrZero
-    private Double durationSeconds;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "route_id")
+    private Route route;
 
     public Long getId() {
         return id;
@@ -105,22 +102,10 @@ public class Ride {
     public void setSeatsAvailable(int seatsAvailable) {
         this.seatsAvailable = seatsAvailable;
     }
-    public String getRoutePolyline() {
-        return routePolyline;
+    public Route getRoute() {
+        return route;
     }
-    public void setRoutePolyline(String routePolyline) {
-        this.routePolyline = routePolyline;
-    }
-    public Double getDistanceMeters() {
-        return distanceMeters;
-    }
-    public void setDistanceMeters(Double distanceMeters) {
-        this.distanceMeters = distanceMeters;
-    }
-    public Double getDurationSeconds() {
-        return durationSeconds;
-    }
-    public void setDurationSeconds(Double durationSeconds) {
-        this.durationSeconds = durationSeconds;
+    public void setRoute(Route route) {
+        this.route = route;
     }
 }
