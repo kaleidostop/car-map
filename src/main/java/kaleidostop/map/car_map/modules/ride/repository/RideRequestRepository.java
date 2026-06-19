@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import kaleidostop.map.car_map.modules.ride.domain.Ride;
 import kaleidostop.map.car_map.modules.ride.domain.RideRequest;
-import kaleidostop.map.car_map.modules.ride.domain.RideRequestStatus;
+import kaleidostop.map.car_map.modules.ride.domain.enums.RideRequestStatus;
 import kaleidostop.map.car_map.modules.user.domain.User;
 
 public interface RideRequestRepository extends JpaRepository<RideRequest, Long> {

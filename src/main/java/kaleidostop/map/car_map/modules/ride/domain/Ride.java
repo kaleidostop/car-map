@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import kaleidostop.map.car_map.modules.office.domain.Office;
+import kaleidostop.map.car_map.modules.ride.domain.enums.RideStatus;
 import kaleidostop.map.car_map.modules.routing.domain.Route;
 import kaleidostop.map.car_map.modules.user.domain.User;
 

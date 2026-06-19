@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 import jakarta.transaction.Transactional;
 import kaleidostop.map.car_map.modules.ride.domain.Ride;
-import kaleidostop.map.car_map.modules.ride.domain.RideStatus;
+import kaleidostop.map.car_map.modules.ride.domain.enums.RideStatus;
 import kaleidostop.map.car_map.modules.ride.repository.RideRepository;
 
 @Component

@@ -2,7 +2,7 @@ package kaleidostop.map.car_map.modules.ride.dto;
 
 import java.time.LocalDateTime;
 
-import kaleidostop.map.car_map.modules.ride.domain.RideRequestStatus;
+import kaleidostop.map.car_map.modules.ride.domain.enums.RideRequestStatus;
 
 public class RideRequestPassengerDto {
     private Long id;

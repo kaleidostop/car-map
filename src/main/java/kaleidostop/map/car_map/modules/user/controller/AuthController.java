@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import kaleidostop.map.car_map.common.security.JwtUtil;
-import kaleidostop.map.car_map.modules.user.domain.Role;
 import kaleidostop.map.car_map.modules.user.domain.User;
+import kaleidostop.map.car_map.modules.user.domain.enums.Role;
 import kaleidostop.map.car_map.modules.user.dto.LoginRequest;
 import kaleidostop.map.car_map.modules.user.dto.RegisterRequest;
 import kaleidostop.map.car_map.modules.user.service.UserService;
@@ -37,11 +37,18 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody @Valid RegisterRequest request) {
         try {
+            Role role;
+            if ("ROLE_DRIVER".equalsIgnoreCase(request.getRole())) {
+                role = Role.ROLE_DRIVER;
+            } else {
+                role = Role.ROLE_USER;
+            }
+
             User user = userService.register(
                 request.getEmail(),
                 request.getPassword(),
                 request.getFullName(),
-                Role.ROLE_USER 
+                role
             );
             String token = jwtUtil.generateToken(user);
             return ResponseEntity.ok(Map.of("token", token, "email", user.getEmail(), "role", user.getRole().name()));

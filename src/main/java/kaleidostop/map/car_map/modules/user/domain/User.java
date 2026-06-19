@@ -15,6 +15,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import kaleidostop.map.car_map.modules.user.domain.enums.Role;
 
 @Entity
 @Table(name = "users")
@@ -34,7 +35,6 @@ public class User implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     private Role role;
-
 
     public Long getId() {
         return id;

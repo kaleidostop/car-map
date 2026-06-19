@@ -15,8 +15,8 @@ import kaleidostop.map.car_map.modules.routing.domain.Route;
 import kaleidostop.map.car_map.modules.routing.dto.RouteInfo;
 import kaleidostop.map.car_map.modules.routing.service.RouteService;
 import kaleidostop.map.car_map.modules.routing.service.RoutingService;
-import kaleidostop.map.car_map.modules.user.domain.Role;
 import kaleidostop.map.car_map.modules.user.domain.User;
+import kaleidostop.map.car_map.modules.user.domain.enums.Role;
 import kaleidostop.map.car_map.modules.user.repository.UserRepository;
 
 @Component

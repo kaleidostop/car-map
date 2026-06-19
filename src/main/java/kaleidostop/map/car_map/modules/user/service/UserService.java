@@ -3,8 +3,8 @@ package kaleidostop.map.car_map.modules.user.service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import kaleidostop.map.car_map.modules.user.domain.Role;
 import kaleidostop.map.car_map.modules.user.domain.User;
+import kaleidostop.map.car_map.modules.user.domain.enums.Role;
 import kaleidostop.map.car_map.modules.user.repository.UserRepository;
 
 @Service

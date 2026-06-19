@@ -29,6 +29,13 @@
                         <label for="password" class="form-label">Пароль</label>
                         <input type="password" class="form-control" id="password" name="password" minlength="6" required>
                     </div>
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Я:</label>
+                        <select class="form-select" id="role" name="role">
+                            <option value="ROLE_USER">Пассажир</option>
+                            <option value="ROLE_DRIVER">Водитель</option>
+                        </select>
+                    </div>
                     <button type="submit" class="btn btn-primary w-100">Зарегистрироваться</button>
                 </form>
                 
