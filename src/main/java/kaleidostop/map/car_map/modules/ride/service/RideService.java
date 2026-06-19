@@ -103,11 +103,11 @@ public class RideService {
         Ride ride = rideRepository.findById(rideId)
                 .orElseThrow(() -> new IllegalArgumentException("Поездка не найдена"));
 
+        if (ride.getSeatsAvailable() <= 0 || ride.getStatus() == RideStatus.FULL) {
+            throw new IllegalStateException("Нет свободных мест");
+        }
         if (ride.getStatus() != RideStatus.ACTIVE) {
             throw new IllegalStateException("Поездка недоступна для присоединения");
-        }
-        if (ride.getSeatsAvailable() <= 0) {
-            throw new IllegalStateException("Нет свободных мест");
         }
         if (ride.getDriver().getId().equals(passenger.getId())) {
             throw new IllegalArgumentException("Нельзя присоединиться к своей поездке");
@@ -281,6 +281,24 @@ public class RideService {
         return rides.stream().map(this::toResponse).toList();
     }
 
+    @Transactional
+    public void cancelRide(Long rideId, User driver) {
+        Ride ride = rideRepository.findById(rideId)
+                .orElseThrow(() -> new IllegalArgumentException("Поездка не найдена"));
+        if (!ride.getDriver().getId().equals(driver.getId())) {
+            throw new AccessDeniedException("Вы не водитель этой поездки");
+        }
+        if (ride.getStatus() != RideStatus.ACTIVE && ride.getStatus() != RideStatus.FULL) {
+            throw new IllegalStateException("Нельзя отменить поездку в текущем статусе");
+        }
+        ride.setStatus(RideStatus.CANCELLED);
+        List<RideRequest> pendingRequests = rideRequestRepository.findByRideIdAndStatus(rideId, RideRequestStatus.PENDING);
+        for (RideRequest req : pendingRequests) {
+            req.setStatus(RideRequestStatus.REJECTED);
+        }
+        rideRepository.save(ride);
+    }
+
     @SuppressWarnings("unchecked")
     private RideResponse toResponse(Ride ride) {
         Map<String, Object> geometry = null;
@@ -312,6 +330,7 @@ public class RideService {
         return new RideResponse(
             ride.getId(),
             ride.getDriver().getFullName(), 
+            ride.getDriver().getEmail(),
             ride.getOffice().getName(),
             ride.getOffice().getLatitude(),
             ride.getOffice().getLongitude(),

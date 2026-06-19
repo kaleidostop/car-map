@@ -5,7 +5,7 @@
     <title>Мои поездки – CarMap</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
-
+    <style>.border-purple { border-color: #6f42c1 !important; }</style>
 </head>
 <body>
     <nav class="navbar navbar-dark bg-dark">
@@ -17,8 +17,32 @@
     </nav>
     <div class="container mt-4">
         <h2>Мои поездки</h2>
-        <div id="rides-container">Загрузка...</div>
+        
+        <h4>В процессе</h4>
+        <div id="rides-in-progress">Загрузка...</div>
+
+        <h4>Запланированные</h4>
+        <div id="rides-active-or-full">Загрузка...</div>    
+        
+        <h4>Завершённые</h4>
+        <div id="rides-completed">Загрузка...</div>
+        
+        <h4>Отменённые</h4>
+        <div id="rides-cancelled">Загрузка...</div>
     </div>
+
+    <template id="ride-card-template">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="ride-title"></h5>
+                <p class="ride-info"></p>
+                <button class="btn btn-sm btn-info load-requests" style="display:none;">Заявки</button>
+                <button class="btn btn-sm btn-danger cancel-ride-btn" style="display:none;">Отменить</button>
+                <div class="requests-container mt-2"></div>  
+                <div class="passengers-list mt-2" style="display:none;"></div>
+            </div>
+        </div>
+    </template>
 
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>

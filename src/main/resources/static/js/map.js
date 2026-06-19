@@ -9,6 +9,9 @@ let pickMode = false;
 let pickModeCallback = null;
 let tempMarker = null;
 
+let currentUserEmail = null;
+let currentUserRole = null;
+
 const token = localStorage.getItem('jwt_token');
 if (!token) {
     window.location.href = '/login';
@@ -16,16 +19,18 @@ if (!token) {
 
 try {
     const payload = JSON.parse(atob(token.split('.')[1]));
-    const role = payload.role;
-    if (payload.role === 'ROLE_ADMIN') {
+    currentUserEmail = payload.sub;
+    currentUserRole = payload.role;
+
+    if (currentUserRole === 'ROLE_ADMIN') {
         document.getElementById('admin-link').style.display = 'inline-block';
     }
-    if (role === 'ROLE_DRIVER' || role === 'ROLE_ADMIN') {
+    if (currentUserRole === 'ROLE_DRIVER' || currentUserRole === 'ROLE_ADMIN') {
         document.getElementById('create-ride-btn').style.display = 'inline-block';
         document.getElementById('my-rides-btn').style.display = 'inline-block';
     }
     document.getElementById('user-info').textContent = 
-        `Вы вошли как: ${payload.sub} (роль: ${role})`;
+        `Вы вошли как: ${currentUserEmail} (роль: ${currentUserRole})`;
 } catch(e) {
     localStorage.removeItem('jwt_token');
     window.location.href = '/login';
@@ -216,6 +221,15 @@ async function loadRides(officeId = null) {
     rides.forEach(ride => {
         const duration = ride.durationSeconds ? Math.round(ride.durationSeconds / 60) + ' мин' : 'неизвестно';
 
+        const isOwnRide = (ride.driverEmail === currentUserEmail);
+
+        let joinButton = '';
+        if (isOwnRide) {
+            joinButton = '<button class="btn btn-sm btn-warning" style="cursor:default;">Моя поездка</button>';
+        } else {
+            joinButton = `<button class="btn btn-sm btn-success" onclick="joinRide(${ride.id})">Присоединиться</button>`;
+        }
+
         const popupContent = `
             <b>Поездка #${ride.id}</b><br>
             Водитель: ${ride.driverName}<br>
@@ -224,7 +238,7 @@ async function loadRides(officeId = null) {
             Время: ${new Date(ride.departureTime).toLocaleString()}<br>
             В пути: ${duration}<br>
             Мест: ${ride.seatsAvailable} из ${ride.seatsTotal}<br>
-            <button onclick="joinRide(${ride.id})" class="badge bg-success">Присоединиться</button>
+            ${joinButton}
         `;
 
         const startMarker = L.marker([ride.departureLat, ride.departureLon], {

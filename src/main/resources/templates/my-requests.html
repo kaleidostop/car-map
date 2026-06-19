@@ -17,8 +17,27 @@
     </nav>
     <div class="container mt-4">
         <h2>Мои заявки</h2>
-        <div id="requests-container">Загрузка...</div>
+        
+        <h4>Ожидают <span class="badge bg-warning"></span></h4>
+        <div id="requests-pending">Загрузка...</div>
+        
+        <h4>Приняты <span class="badge bg-success"></span></h4>
+        <div id="requests-accepted">Загрузка...</div>
+        
+        <h4>Отклонены <span class="badge bg-danger"></span></h4>
+        <div id="requests-rejected">Загрузка...</div>
     </div>
+
+    <template id="request-card-template">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="ride-info"></h5>
+                <p class="driver-name"></p>
+                <p class="departure-time"></p>
+                <p class="seats-info"></p>
+            </div>
+        </div>
+    </template>
 
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>

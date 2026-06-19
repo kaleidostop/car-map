@@ -1,5 +1,6 @@
 package kaleidostop.map.car_map.modules.ride.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,8 @@ public interface RideRepository extends JpaRepository<Ride, Long> {
     List<Ride> findByStatus(RideStatus status);
 
     List<Ride> findByStatusAndOfficeId(RideStatus status, Long officeId);
+
+    List<Ride> findByStatusInAndDepartureTimeBefore(List<RideStatus> statuses, LocalDateTime time);
 
     List<Ride> findByDriver(User driver);
 }

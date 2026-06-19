@@ -89,4 +89,12 @@ public class RideController {
         User user = (User) auth.getPrincipal();
         return ResponseEntity.ok(rideService.getRidesByDriver(user));
     }
+
+    @PatchMapping("/{rideId}/cancel")
+    @PreAuthorize("hasAnyRole('DRIVER', 'ADMIN')")
+    public ResponseEntity<?> cancelRide(@PathVariable(name = "rideId") Long rideId, Authentication auth) {
+        User driver = (User) auth.getPrincipal();
+        rideService.cancelRide(rideId, driver);
+        return ResponseEntity.ok(Map.of("message", "Поездка отменена"));
+    }
 }
