@@ -3,7 +3,9 @@ package kaleidostop.map.car_map.modules.ride.dto;
 import java.time.LocalDateTime;
 
 import kaleidostop.map.car_map.modules.ride.domain.enums.RideRequestStatus;
+import lombok.Getter;
 
+@Getter
 public class RideRequestPassengerDto {
     private Long id;
     private Long rideId;
@@ -31,15 +33,4 @@ public class RideRequestPassengerDto {
         this.driverName = driverName;
         this.seatsAvailable = seatsAvailable;
     }
-
-    public Long getId() { return id; }
-    public Long getRideId() { return rideId; }
-    public String getDepartureAddress() { return departureAddress; }
-    public String getOfficeName() { return officeName; }
-    public LocalDateTime getDepartureTime() { return departureTime; }
-    public RideRequestStatus getStatus() { return status; }
-    public double getPassengerLat() { return passengerLat; }
-    public double getPassengerLon() { return passengerLon; }
-    public String getDriverName() { return driverName; }
-    public int getSeatsAvailable() { return seatsAvailable; }
 }

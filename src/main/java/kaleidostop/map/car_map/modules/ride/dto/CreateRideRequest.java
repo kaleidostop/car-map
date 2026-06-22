@@ -8,7 +8,11 @@ import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class CreateRideRequest {
 
     @NotNull(message = "Офис обязателен")
@@ -33,41 +37,4 @@ public class CreateRideRequest {
 
     @Positive(message = "Количество мест должно быть > 0")
     private int seatsTotal;
-
-    public Long getOfficeId() {
-        return officeId;
-    }
-    public void setOfficeId(Long officeId) {
-        this.officeId = officeId;
-    }
-    public String getDepartureAddress() {
-        return departureAddress;
-    }
-    public void setDepartureAddress(String departureAddress) {
-        this.departureAddress = departureAddress;
-    }
-    public Double getDepartureLat() {
-        return departureLat;
-    }
-    public void setDepartureLat(Double departureLat) {
-        this.departureLat = departureLat;
-    }
-    public Double getDepartureLon() {
-        return departureLon;
-    }
-    public void setDepartureLon(Double departureLon) {
-        this.departureLon = departureLon;
-    }
-    public LocalDateTime getDepartureTime() {
-        return departureTime;
-    }
-    public void setDepartureTime(LocalDateTime departureTime) {
-        this.departureTime = departureTime;
-    }
-    public int getSeatsTotal() {
-        return seatsTotal;
-    }
-    public void setSeatsTotal(int seatsTotal) {
-        this.seatsTotal = seatsTotal;
-    }
 }

@@ -16,7 +16,11 @@ import kaleidostop.map.car_map.modules.office.domain.Office;
 import kaleidostop.map.car_map.modules.ride.domain.enums.RideStatus;
 import kaleidostop.map.car_map.modules.routing.domain.Route;
 import kaleidostop.map.car_map.modules.user.domain.User;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "rides")
 public class Ride {
@@ -45,68 +49,4 @@ public class Ride {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "route_id")
     private Route route;
-
-    public Long getId() {
-        return id;
-    }
-    public User getDriver() {
-        return driver;
-    }
-    public void setDriver(User driver) {
-        this.driver = driver;
-    }
-    public Office getOffice() {
-        return office;
-    }
-    public void setOffice(Office office) {
-        this.office = office;
-    }
-    public RideStatus getStatus() {
-        return status;
-    }
-    public void setStatus(RideStatus status) {
-        this.status = status;
-    }
-    public String getDepartureAddress() {
-        return departureAddress;
-    }
-    public void setDepartureAddress(String departureAddress) {
-        this.departureAddress = departureAddress;
-    }
-    public Double getDepartureLat() {
-        return departureLat;
-    }
-    public void setDepartureLat(Double departureLat) {
-        this.departureLat = departureLat;
-    }
-    public Double getDepartureLon() {
-        return departureLon;
-    }
-    public void setDepartureLon(Double departureLon) {
-        this.departureLon = departureLon;
-    }
-    public LocalDateTime getDepartureTime() {
-        return departureTime;
-    }
-    public void setDepartureTime(LocalDateTime departureTime) {
-        this.departureTime = departureTime;
-    }
-    public int getSeatsTotal() {
-        return seatsTotal;
-    }
-    public void setSeatsTotal(int seatsTotal) {
-        this.seatsTotal = seatsTotal;
-    }
-    public int getSeatsAvailable() {
-        return seatsAvailable;
-    }
-    public void setSeatsAvailable(int seatsAvailable) {
-        this.seatsAvailable = seatsAvailable;
-    }
-    public Route getRoute() {
-        return route;
-    }
-    public void setRoute(Route route) {
-        this.route = route;
-    }
 }

@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import lombok.Getter;
+
+@Getter
 public class RideResponse {
     private Long id;
     private String driverName;
@@ -48,22 +51,4 @@ public class RideResponse {
         this.routeGeometry = routeGeometry;
         this.passengers = passengers;
     }
-
-    public Long getId() { return id; }
-    public String getDriverName() { return driverName; }
-    public String getDriverEmail() { return driverEmail; }
-    public String getOfficeName() { return officeName; }
-    public double getOfficeLat() { return officeLat; }
-    public double getOfficeLon() { return officeLon; }
-    public String getDepartureAddress() { return departureAddress; }
-    public double getDepartureLat() { return departureLat; }
-    public double getDepartureLon() { return departureLon; }
-    public LocalDateTime getDepartureTime() { return departureTime; }
-    public int getSeatsTotal() { return seatsTotal; }
-    public int getSeatsAvailable() { return seatsAvailable; }
-    public String getStatus() { return status; }
-    public double getDistanceMeters() { return distanceMeters; }
-    public double getDurationSeconds() { return durationSeconds; }
-    public Map<String, Object> getRouteGeometry() { return routeGeometry; }
-    public List<Map<String, Object>> getPassengers() { return passengers; }
 }

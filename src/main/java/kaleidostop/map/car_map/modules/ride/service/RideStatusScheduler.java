@@ -26,12 +26,7 @@ public class RideStatusScheduler {
         
         List<Ride> toStart = rideRepository.findByStatusInAndDepartureTimeBefore(
                 List.of(RideStatus.ACTIVE, RideStatus.FULL), now);
-        // log.info("Scheduler running at: {}", now);
-        // log.info("Found {} rides to start", toStart.size());
-
         for (Ride ride : toStart) {
-            // log.info("Ride {} departureTime: {}, now: {}", ride.getId(), ride.getDepartureTime(), LocalDateTime.now());
-
             ride.setStatus(RideStatus.IN_PROGRESS);
         }
         

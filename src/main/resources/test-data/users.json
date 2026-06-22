@@ -1,0 +1,23 @@
+[
+  { "email": "admin@example.com", "password": "admin", "fullName": "Админ", "role": "ROLE_ADMIN" },
+  { "email": "driver1@example.com", "password": "driver1", "fullName": "Водитель Один", "role": "ROLE_DRIVER" },
+  { "email": "driver2@example.com", "password": "driver2", "fullName": "Водитель Два", "role": "ROLE_DRIVER" },
+  { "email": "driver3@example.com", "password": "driver3", "fullName": "Водитель Три", "role": "ROLE_DRIVER" },
+  { "email": "driver4@example.com", "password": "driver4", "fullName": "Водитель Четыре", "role": "ROLE_DRIVER" },
+  { "email": "driver5@example.com", "password": "driver5", "fullName": "Водитель Пять", "role": "ROLE_DRIVER" },
+  { "email": "driver6@example.com", "password": "driver6", "fullName": "Водитель Шесть", "role": "ROLE_DRIVER" },
+  { "email": "driver7@example.com", "password": "driver7", "fullName": "Водитель Семь", "role": "ROLE_DRIVER" },
+  { "email": "driver8@example.com", "password": "driver8", "fullName": "Водитель Восемь", "role": "ROLE_DRIVER" },
+  { "email": "driver9@example.com", "password": "driver9", "fullName": "Водитель Девять", "role": "ROLE_DRIVER" },
+  { "email": "driver10@example.com", "password": "driver10", "fullName": "Водитель Десять", "role": "ROLE_DRIVER" },
+  { "email": "user1@example.com", "password": "user1", "fullName": "Пассажир Один", "role": "ROLE_USER" },
+  { "email": "user2@example.com", "password": "user2", "fullName": "Пассажир Два", "role": "ROLE_USER" },
+  { "email": "user3@example.com", "password": "user3", "fullName": "Пассажир Три", "role": "ROLE_USER" },
+  { "email": "user4@example.com", "password": "user4", "fullName": "Пассажир Четыре", "role": "ROLE_USER" },
+  { "email": "user5@example.com", "password": "user5", "fullName": "Пассажир Пять", "role": "ROLE_USER" },
+  { "email": "user6@example.com", "password": "user6", "fullName": "Пассажир Шесть", "role": "ROLE_USER" },
+  { "email": "user7@example.com", "password": "user7", "fullName": "Пассажир Семь", "role": "ROLE_USER" },
+  { "email": "user8@example.com", "password": "user8", "fullName": "Пассажир Восемь", "role": "ROLE_USER" },
+  { "email": "user9@example.com", "password": "user9", "fullName": "Пассажир Девять", "role": "ROLE_USER" },
+  { "email": "user10@example.com", "password": "user10", "fullName": "Пассажир Десять", "role": "ROLE_USER" }
+]

@@ -1,128 +1,133 @@
 package kaleidostop.map.car_map;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
 
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import kaleidostop.map.car_map.modules.office.domain.Office;
+import kaleidostop.map.car_map.modules.office.dto.OfficeSeed;
 import kaleidostop.map.car_map.modules.office.repository.OfficeRepository;
 import kaleidostop.map.car_map.modules.ride.domain.Ride;
+import kaleidostop.map.car_map.modules.ride.domain.RideRequest;
+import kaleidostop.map.car_map.modules.ride.domain.enums.RideRequestStatus;
+import kaleidostop.map.car_map.modules.ride.domain.enums.RideStatus;
+import kaleidostop.map.car_map.modules.ride.dto.RideSeed;
 import kaleidostop.map.car_map.modules.ride.repository.RideRepository;
+import kaleidostop.map.car_map.modules.ride.repository.RideRequestRepository;
 import kaleidostop.map.car_map.modules.routing.domain.Route;
 import kaleidostop.map.car_map.modules.routing.dto.RouteInfo;
 import kaleidostop.map.car_map.modules.routing.service.RouteService;
 import kaleidostop.map.car_map.modules.routing.service.RoutingService;
 import kaleidostop.map.car_map.modules.user.domain.User;
 import kaleidostop.map.car_map.modules.user.domain.enums.Role;
+import kaleidostop.map.car_map.modules.user.dto.UserSeed;
 import kaleidostop.map.car_map.modules.user.repository.UserRepository;
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final OfficeRepository officeRepository;
     private final RideRepository rideRepository;
+    private final RideRequestRepository rideRequestRepository;
     private final RoutingService routingService;
     private final RouteService routeService;
     private final PasswordEncoder passwordEncoder;
+    private final ObjectMapper objectMapper;
 
-    public DataInitializer(UserRepository userRepository, OfficeRepository officeRepository, RideRepository rideRepository, RoutingService routingService, RouteService routeService, PasswordEncoder passwordEncoder) {
+    public DataInitializer(UserRepository userRepository, OfficeRepository officeRepository, RideRepository rideRepository, RideRequestRepository rideRequestRepository, RoutingService routingService, RouteService routeService, PasswordEncoder passwordEncoder, ObjectMapper objectMapper) {
         this.userRepository = userRepository;
         this.officeRepository = officeRepository;
         this.rideRepository = rideRepository;
+        this.rideRequestRepository = rideRequestRepository;
         this.routingService = routingService;
         this.routeService = routeService;
         this.passwordEncoder = passwordEncoder;
+        this.objectMapper = objectMapper;
     }
 
-    @Transactional
     @Override
-    public void run(String... args) {
+    @Transactional
+    public void run(String... args) throws Exception {
         if (userRepository.count() == 0) {
-            // Водители
-            User driver1 = new User();
-            driver1.setEmail("driver@example.com");
-            driver1.setPasswordHash(passwordEncoder.encode("driver"));
-            driver1.setFullName("Райан Гослинг");
-            driver1.setRole(Role.ROLE_DRIVER);
-            userRepository.save(driver1);
-
-            User driver2 = new User();
-            driver2.setEmail("car@example.com");
-            driver2.setPasswordHash(passwordEncoder.encode("car"));
-            driver2.setFullName("Молния Маккуин");
-            driver2.setRole(Role.ROLE_DRIVER);
-            userRepository.save(driver2);
-
-            User driver3 = new User();
-            driver3.setEmail("transformer@example.com");
-            driver3.setPasswordHash(passwordEncoder.encode("transformer"));
-            driver3.setFullName("Оптимус Прайм");
-            driver3.setRole(Role.ROLE_DRIVER);
-            userRepository.save(driver3);
-
-            // Пассажиры
-            User passenger1 = new User();
-            passenger1.setEmail("user1@example.com");
-            passenger1.setPasswordHash(passwordEncoder.encode("user1"));
-            passenger1.setFullName("Пассажир 1");
-            passenger1.setRole(Role.ROLE_USER);
-            userRepository.save(passenger1);
-
-            User passenger2 = new User();
-            passenger2.setEmail("user2@example.com");
-            passenger2.setPasswordHash(passwordEncoder.encode("user2"));
-            passenger2.setFullName("Пассажир 2");
-            passenger2.setRole(Role.ROLE_USER);
-            userRepository.save(passenger2);
-
-            User passenger3 = new User();
-            passenger3.setEmail("user3@example.com");
-            passenger3.setPasswordHash(passwordEncoder.encode("user3"));
-            passenger3.setFullName("Пассажир 3");
-            passenger3.setRole(Role.ROLE_USER);
-            userRepository.save(passenger3);
-
-            // Админ
-            User admin = new User();
-            admin.setEmail("admin@example.com");
-            admin.setPasswordHash(passwordEncoder.encode("admin"));
-            admin.setFullName("Админ");
-            admin.setRole(Role.ROLE_ADMIN);
-            userRepository.save(admin);
+            loadUsers();
         }
         if (officeRepository.count() == 0) {
-            Office o1 = new Office();
-            o1.setName("Главный корпус");
-            o1.setAddress("Санкт-Петербург, Кронверкский пр., 49");
-            o1.setLatitude(59.956363);
-            o1.setLongitude(30.310011);
-            officeRepository.save(o1);
-
-            Office o2 = new Office();
-            o2.setName("Корпус на Ломоносова");
-            o2.setAddress("Санкт-Петербург, ул. Ломоносова, 9");
-            o2.setLatitude(59.927288);
-            o2.setLongitude(30.338353);
-            officeRepository.save(o2);
-
-            Office o3 = new Office();
-            o3.setName("Спортивный комплекс");
-            o3.setAddress("Санкт-Петербург, Вяземский пер., 5-7");
-            o3.setLatitude(59.972631);
-            o3.setLongitude(30.302501);
-            officeRepository.save(o3);
+            loadOffices();
         }
+        if (rideRepository.count() == 0) {
+            List<Ride> rides = loadRides();
+            fillRoutes(rides);
+            createSampleRequests(rides);
+        }
+    }
 
-        List<Ride> ridesWithoutRoute = rideRepository.findAll()
-        .stream()
-        .filter(r -> r.getRoute() == null)
-        .toList();
+    private void loadUsers() throws IOException {
+        UserSeed[] seeds = loadJson("test-data/users.json", UserSeed[].class);
+        for (UserSeed seed : seeds) {
+            User user = new User();
+            user.setEmail(seed.getEmail());
+            user.setPasswordHash(passwordEncoder.encode(seed.getPassword()));
+            user.setFullName(seed.getFullName());
+            user.setRole(Role.valueOf(seed.getRole()));
+            userRepository.save(user);
+        }
+    }
 
-        try {
-            for (Ride ride : ridesWithoutRoute) {
+    private void loadOffices() throws IOException {
+        OfficeSeed[] seeds = loadJson("test-data/offices.json", OfficeSeed[].class);
+        for (OfficeSeed seed : seeds) {
+            Office office = new Office();
+            office.setName(seed.getName());
+            office.setAddress(seed.getAddress());
+            office.setLatitude(seed.getLatitude());
+            office.setLongitude(seed.getLongitude());
+            officeRepository.save(office);
+        }
+    }
+
+    private List<Ride> loadRides() throws IOException {
+        RideSeed[] seeds = loadJson("test-data/rides.json", RideSeed[].class);
+        List<Ride> rides = new ArrayList<>();
+        for (RideSeed seed : seeds) {
+            User driver = userRepository.findByEmail(seed.getDriverEmail())
+                    .orElseThrow(() -> new RuntimeException("Driver not found: " + seed.getDriverEmail()));
+            Office office = officeRepository.findAll().stream()
+                    .filter(o -> o.getName().equals(seed.getOfficeName()))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Office not found: " + seed.getOfficeName()));
+
+            LocalDateTime now = LocalDateTime.now();
+            Ride ride = new Ride();
+            ride.setDriver(driver);
+            ride.setOffice(office);
+            ride.setDepartureAddress(seed.getDepartureAddress());
+            ride.setDepartureLat(seed.getDepartureLat());
+            ride.setDepartureLon(seed.getDepartureLon());
+            ride.setDepartureTime(now.plusMinutes(seed.getDepartureTimeOffset()));
+            ride.setSeatsTotal(seed.getSeatsTotal());
+            ride.setSeatsAvailable(seed.getSeatsTotal()); 
+            ride.setStatus(RideStatus.valueOf(seed.getStatus()));
+            rides.add(ride);
+            rideRepository.save(ride);
+        }
+        return rides;
+    }
+
+    private void fillRoutes(List<Ride> rides) {
+        for (Ride ride : rides) {
+            if (ride.getRoute() == null) {
                 RouteInfo info = routingService.getRoute(
                         ride.getDepartureLon(), ride.getDepartureLat(),
                         ride.getOffice().getLongitude(), ride.getOffice().getLatitude()
@@ -136,10 +141,61 @@ public class DataInitializer implements CommandLineRunner {
                     ride.setRoute(route);
                     rideRepository.save(ride);
                 }
-                Thread.sleep(1000);
             }
-        } catch (InterruptedException e) {
-                Thread.currentThread().interrupt(); 
+        }
+    }
+
+
+    private void createSampleRequests(List<Ride> rides) {
+        List<Ride> activeRides = rides.stream()
+                .filter(r -> r.getStatus() == RideStatus.ACTIVE || r.getStatus() == RideStatus.FULL)
+                .collect(Collectors.toList());
+        List<User> passengers = userRepository.findAll().stream()
+                .filter(u -> u.getRole() == Role.ROLE_USER)
+                .collect(Collectors.toList());
+
+        if (activeRides.isEmpty() || passengers.isEmpty()) return;
+
+        Random random = new Random(42); 
+
+        for (Ride ride : activeRides) {
+            int requestCount = random.nextInt(3) + 1; // 1..3
+            for (int i = 0; i < requestCount && i < passengers.size(); i++) {
+                User passenger = passengers.get(random.nextInt(passengers.size()));
+                if (rideRequestRepository.existsByRideAndPassengerAndStatusIn(ride, passenger,
+                        List.of(RideRequestStatus.PENDING, RideRequestStatus.ACCEPTED))) {
+                    continue;
+                }
+                double pLat = ride.getDepartureLat() + (random.nextDouble() - 0.5) * 0.02;
+                double pLon = ride.getDepartureLon() + (random.nextDouble() - 0.5) * 0.02;
+
+                RideRequest req = new RideRequest();
+                req.setRide(ride);
+                req.setPassenger(passenger);
+                req.setPassengerDepartureLat(pLat);
+                req.setPassengerDepartureLon(pLon);
+                double r = random.nextDouble();
+                if (r < 0.4 && ride.getSeatsAvailable() > 0) {
+                    req.setStatus(RideRequestStatus.ACCEPTED);
+                    ride.setSeatsAvailable(ride.getSeatsAvailable() - 1);
+                } else if (r < 0.8) {
+                    req.setStatus(RideRequestStatus.PENDING);
+                } else {
+                    req.setStatus(RideRequestStatus.REJECTED);
+                }
+                rideRequestRepository.save(req);
             }
+            if (ride.getSeatsAvailable() == 0 && ride.getStatus() == RideStatus.ACTIVE) {
+                ride.setStatus(RideStatus.FULL);
+            }
+            rideRepository.save(ride);
+        }
+    }
+
+    private <T> T loadJson(String resourcePath, Class<T> type) throws IOException {
+        Resource resource = new ClassPathResource(resourcePath);
+        try (InputStream inputStream = resource.getInputStream()) {
+            return objectMapper.readValue(inputStream, type);
+        }
     }
 }

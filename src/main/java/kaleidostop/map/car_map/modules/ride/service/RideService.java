@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import kaleidostop.map.car_map.common.util.RideConstants;
 import kaleidostop.map.car_map.modules.office.domain.Office;
-import kaleidostop.map.car_map.modules.office.repository.OfficeRepository;
+import kaleidostop.map.car_map.modules.office.service.OfficeService;
 import kaleidostop.map.car_map.modules.ride.domain.Ride;
 import kaleidostop.map.car_map.modules.ride.domain.RideRequest;
 import kaleidostop.map.car_map.modules.ride.domain.enums.RideRequestStatus;
@@ -36,7 +36,7 @@ import tools.jackson.databind.ObjectMapper;
 @Service
 public class RideService {
     private final RideRepository rideRepository;
-    private final OfficeRepository officeRepository;
+    private final OfficeService officeService;
     private final RoutingService routingService;
     private final RouteService routeService;
     private final ObjectMapper objectMapper;
@@ -44,9 +44,9 @@ public class RideService {
     private final SimpMessagingTemplate messagingTemplate;
     private static final Logger log = LoggerFactory.getLogger(RideService.class);
 
-    public RideService(RideRepository rideRepository, OfficeRepository officeRepository, RoutingService routingService, RouteService routeService, RideRequestRepository rideRequestRepository, SimpMessagingTemplate messagingTemplate, ObjectMapper objectMapper) {
+    public RideService(RideRepository rideRepository, OfficeService officeService, RoutingService routingService, RouteService routeService, RideRequestRepository rideRequestRepository, SimpMessagingTemplate messagingTemplate, ObjectMapper objectMapper) {
         this.rideRepository = rideRepository;
-        this.officeRepository = officeRepository;
+        this.officeService = officeService;
         this.routingService = routingService;
         this.routeService = routeService;
         this.objectMapper = objectMapper;
@@ -58,8 +58,7 @@ public class RideService {
     public Ride createRide(User driver, Long officeId, String departureAddress,
                            Double depLat, Double depLon,
                            LocalDateTime departureTime, int seatsTotal) {
-        Office office = officeRepository.findById(officeId)
-                .orElseThrow(() -> new IllegalArgumentException("Office not found"));
+        Office office = officeService.getById(officeId);
 
         Ride ride = new Ride();
         ride.setDriver(driver);

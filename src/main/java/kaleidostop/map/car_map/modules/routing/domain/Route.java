@@ -1,8 +1,18 @@
 package kaleidostop.map.car_map.modules.routing.domain;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 @Entity
 @Table(name = "routes")
 public class Route {
@@ -21,15 +31,4 @@ public class Route {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public String getPolyline() { return polyline; }
-    public void setPolyline(String polyline) { this.polyline = polyline; }
-    public Double getDistanceMeters() { return distanceMeters; }
-    public void setDistanceMeters(Double distanceMeters) { this.distanceMeters = distanceMeters; }
-    public Double getDurationSeconds() { return durationSeconds; }
-    public void setDurationSeconds(Double durationSeconds) { this.durationSeconds = durationSeconds; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }
