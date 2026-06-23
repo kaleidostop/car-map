@@ -1,20 +1,5 @@
 package kaleidostop.map.car_map.modules.ride.controller;
 
-import java.util.List;
-import java.util.Map;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
 import jakarta.validation.Valid;
 import kaleidostop.map.car_map.modules.ride.domain.Ride;
 import kaleidostop.map.car_map.modules.ride.dto.CreateRideRequest;
@@ -23,6 +8,13 @@ import kaleidostop.map.car_map.modules.ride.dto.RideRequestDto;
 import kaleidostop.map.car_map.modules.ride.dto.RideResponse;
 import kaleidostop.map.car_map.modules.ride.service.RideService;
 import kaleidostop.map.car_map.modules.user.domain.User;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -35,7 +27,7 @@ public class RideController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('DRIVER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('DRIVER', 'ADMIN')")
     public ResponseEntity<?> createRide(@RequestBody @Valid CreateRideRequest request,
                                        Authentication auth) {
         User driver = (User) auth.getPrincipal();
@@ -96,5 +88,12 @@ public class RideController {
         User driver = (User) auth.getPrincipal();
         rideService.cancelRide(rideId, driver);
         return ResponseEntity.ok(Map.of("message", "Поездка отменена"));
+    }
+
+    @GetMapping("/my/pending-requests-count")
+    @PreAuthorize("hasAnyRole('DRIVER', 'ADMIN')")
+    public ResponseEntity<Long> getPendingRequestsCount(Authentication auth) {
+        User user = (User) auth.getPrincipal();
+        return ResponseEntity.ok(rideService.getPendingRequestsCount(user));
     }
 }

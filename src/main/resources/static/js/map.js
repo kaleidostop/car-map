@@ -17,6 +17,21 @@ if (!token) {
     window.location.href = '/login';
 }
 
+let pendingCount = 0;
+const badge = document.getElementById('requests-badge');
+
+// Функция обновления бейджа
+function updateBadge(count) {
+    if (badge) {
+        if (count > 0) {
+            badge.textContent = count;
+            badge.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+}
+
 try {
     const payload = JSON.parse(atob(token.split('.')[1]));
     currentUserEmail = payload.sub;
@@ -391,7 +406,48 @@ function joinRide(rideId) {
     });
 }
 
+async function loadPendingCount() {
+    try {
+        const resp = await fetchWithAuth('/api/rides/my/pending-requests-count');
+        if (resp.ok) {
+            const count = await resp.json();
+            pendingCount = count;
+            updateBadge(pendingCount);
+        }
+    } catch(e) {}
+}
+
 (async function init() {
     await loadOffices();
     await loadRides();
+    loadPendingCount();
 })();
+
+let stompClient = null;
+
+function connectWebSocket() {
+    const token = localStorage.getItem('jwt_token');
+    const socket = new SockJS('/ws?access_token=' + token);
+    stompClient = StompJs.Stomp.over(socket);
+    stompClient.connect({}, function(frame) {
+        console.log('WS connected: ' + frame);
+
+        stompClient.subscribe('/user/queue/requests', function(message) {
+            const body = JSON.parse(message.body);
+            pendingCount++;
+            updateBadge(pendingCount);
+            alert(`Новая заявка от ${body.passengerName} на поездку #${body.rideId}`);
+            loadRides();
+        });
+
+        stompClient.subscribe('/user/queue/request-status', function(message) {
+            const body = JSON.parse(message.body);
+            alert(body.message || 'Обновление статуса заявки');
+            loadRides();
+        });
+    }, function(error) {
+        console.error('WS error:', error);
+    });
+}
+
+connectWebSocket();

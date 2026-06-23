@@ -20,7 +20,10 @@
                 <span id="user-info" class="text-light me-3"></span>
                 <a href="/create-ride" class="btn btn-success btn-sm me-2" id="create-ride-btn" style="display: none;">Создать поездку</a>
                 <a href="/my-requests" class="btn btn-outline-light btn-sm me-2">Мои заявки</a>
-                <a href="/my-rides" class="btn btn-outline-light btn-sm me-2" id="my-rides-btn" style="display: none;">Мои поездки</a>
+                <a href="/my-rides" class="btn btn-outline-light btn-sm position-relative" id="my-rides-btn" style="display:none;">
+                    Мои поездки
+                    <span id="requests-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">0</span>
+                </a>
                 <a href="/admin/offices" id="admin-link" class="btn btn-outline-warning btn-sm me-2" style="display:none;">Админка</a>
                 <button id="logout-btn" class="btn btn-outline-light btn-sm">Выйти</button>
             </div>
@@ -51,6 +54,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
 
     <script src="/js/auth-helper.js"></script>
     <script src="/js/map.js"></script>

@@ -12,7 +12,8 @@ const groups = {
 };
 
 function connectWebSocket() {
-    const socket = new SockJS('/ws');
+    const token = localStorage.getItem('jwt_token');
+    const socket = new SockJS('/ws?access_token=' + token);
     stompClient = StompJs.Stomp.over(socket);
     stompClient.connect({}, function(frame) {
         console.log('Connected: ' + frame);

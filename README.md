@@ -13,10 +13,12 @@
 
 ![Карта](images/README/map.png)
 
-![Поездки](images/README/image.png)
+![Поездки](images/README/my_rides.png)
+
+![Заявки](images/README/my_requests.png)
 
 ## Схема данных
-![Поездки](images/README/carmap_schema.png)
+![Поездки](images/README/schema.png)
 
 
 ## Инструкция по запуску

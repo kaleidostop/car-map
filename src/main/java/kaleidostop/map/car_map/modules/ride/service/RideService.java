@@ -134,9 +134,9 @@ public class RideService {
         Route newRoute = routeService.createRoute(newRouteInfo.getGeometry(),
                 newRouteInfo.getDistanceMeters(), newRouteInfo.getDurationSeconds());
         request.setRoute(newRoute);
-        rideRequestRepository.save(request);
 
         String warning = null;
+        String messageToDriver = null;
 
         if (ride.isManualApproval()) {
             request.setStatus(RideRequestStatus.PENDING);
@@ -147,6 +147,7 @@ public class RideService {
                         ") уже равно или превышает число свободных мест (" +
                         ride.getSeatsAvailable() + "). Ваш запрос может быть не удовлетворён.";
             }
+            messageToDriver = "Новый запрос от " + passenger.getFullName();
         } else {
             try {
                 for (RideJoinRule rule : joinRules) {
@@ -159,8 +160,34 @@ public class RideService {
 
                 ride.setRoute(newRoute);
                 rideRepository.save(ride);
+
+                String passengerEmail = request.getPassenger().getEmail();
+                messagingTemplate.convertAndSendToUser(
+                        passengerEmail,
+                        "/queue/request-status",
+                        Map.of(
+                                "requestId", request.getId(),
+                                "rideId", ride.getId(),
+                                "status", request.getStatus(),
+                                "message", "Ваша заявка на поездку #" + ride.getId() + " принята автоматически!"
+                        )
+                );
+                messageToDriver =  "Новый пассажир " + passenger.getFullName() + " присоединился к поездке #" + ride.getId() + " (автоматически)";
             } catch (IllegalStateException e) {
                 request.setStatus(RideRequestStatus.REJECTED);
+
+                String passengerEmail = request.getPassenger().getEmail();
+                messagingTemplate.convertAndSendToUser(
+                        passengerEmail,
+                        "/queue/request-status",
+                        Map.of(
+                                "requestId", request.getId(),
+                                "rideId", ride.getId(),
+                                "status", request.getStatus(),
+                                "message", "Ваша заявка на поездку #" + ride.getId() + " отклонена:" + e.getMessage()
+                        )
+                );
+                messageToDriver = "Заявка от " + passenger.getFullName() + " автоматически отклонена: " + e.getMessage();
             }
         }
 
@@ -170,9 +197,9 @@ public class RideService {
                 ride.getDriver().getEmail(),
                 "/queue/requests",
                 Map.of(
-                    "rideId", ride.getId(),
-                    "passengerName", passenger.getFullName(),
-                    "message", "Новый запрос от " + passenger.getFullName()
+                        "rideId", ride.getId(),
+                        "passengerName", passenger.getFullName(),
+                        "message", messageToDriver
                 )
         );
 
@@ -231,7 +258,7 @@ public class RideService {
     @Transactional
     public Map<String, Object> handleRequest(Long rideId, Long requestId, String action, User driver) {
         RideRequest request = rideRequestRepository.findById(requestId)
-                .orElseThrow(() -> new IllegalArgumentException("Заявка не найдена"));
+                .orElseThrow(() -> new NotFoundException("Поездка", rideId));
         Ride ride = request.getRide();
         if (!ride.getId().equals(rideId)) {
             throw new IllegalArgumentException("Несоответствие поездки");
@@ -310,7 +337,7 @@ public class RideService {
     @Transactional
     public void cancelRide(Long rideId, User driver) {
         Ride ride = rideRepository.findById(rideId)
-                .orElseThrow(() -> new IllegalArgumentException("Поездка не найдена"));
+                .orElseThrow(() -> new NotFoundException("Поездка", rideId));
         if (!ride.getDriver().getId().equals(driver.getId())) {
             throw new AccessDeniedException("Вы не водитель этой поездки");
         }
@@ -318,11 +345,30 @@ public class RideService {
             throw new IllegalStateException("Нельзя отменить поездку в текущем статусе");
         }
         ride.setStatus(RideStatus.CANCELLED);
-        List<RideRequest> pendingRequests = rideRequestRepository.findByRideIdAndStatus(rideId, RideRequestStatus.PENDING);
-        for (RideRequest req : pendingRequests) {
+        List<RideRequest> requestsToCancel = rideRequestRepository.findByRideIdAndStatusIn(
+                rideId,
+                List.of(RideRequestStatus.PENDING, RideRequestStatus.ACCEPTED)
+        );
+        for (RideRequest req : requestsToCancel) {
             req.setStatus(RideRequestStatus.REJECTED);
+            messagingTemplate.convertAndSendToUser(
+                    req.getPassenger().getEmail(),
+                    "/queue/request-status",
+                    Map.of(
+                            "requestId", req.getId(),
+                            "rideId", rideId,
+                            "status", "REJECTED",
+                            "message", "Поездка #" + rideId + " была отменена водителем"
+                    )
+            );
         }
         rideRepository.save(ride);
+    }
+
+    public long getPendingRequestsCount(User driver) {
+        return rideRepository.findByDriver(driver).stream()
+                .mapToLong(ride -> rideRequestRepository.countByRideIdAndStatus(ride.getId(), RideRequestStatus.PENDING))
+                .sum();
     }
 
     @SuppressWarnings("unchecked")
