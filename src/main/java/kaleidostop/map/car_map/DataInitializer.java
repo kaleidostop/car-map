@@ -1,20 +1,5 @@
 package kaleidostop.map.car_map;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.stream.Collectors;
-
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 import kaleidostop.map.car_map.modules.office.domain.Office;
 import kaleidostop.map.car_map.modules.office.dto.OfficeSeed;
 import kaleidostop.map.car_map.modules.office.repository.OfficeRepository;
@@ -33,7 +18,21 @@ import kaleidostop.map.car_map.modules.user.domain.User;
 import kaleidostop.map.car_map.modules.user.domain.enums.Role;
 import kaleidostop.map.car_map.modules.user.dto.UserSeed;
 import kaleidostop.map.car_map.modules.user.repository.UserRepository;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -125,13 +124,33 @@ public class DataInitializer implements CommandLineRunner {
         return rides;
     }
 
-    private void fillRoutes(List<Ride> rides) {
+    private void fillRoutes(List<Ride> rides) throws InterruptedException {
         for (Ride ride : rides) {
             if (ride.getRoute() == null) {
-                RouteInfo info = routingService.getRoute(
-                        ride.getDepartureLon(), ride.getDepartureLat(),
-                        ride.getOffice().getLongitude(), ride.getOffice().getLatitude()
-                );
+                List<RideRequest> accepted = rideRequestRepository
+                        .findByRideIdAndStatus(ride.getId(), RideRequestStatus.ACCEPTED);
+
+                List<double[]> waypoints = new ArrayList<>();
+                for (RideRequest req : accepted) {
+                    if (req.getPassengerDepartureLat() != null && req.getPassengerDepartureLon() != null) {
+                        waypoints.add(new double[]{req.getPassengerDepartureLon(), req.getPassengerDepartureLat()});
+                    }
+                }
+
+                RouteInfo info;
+                if (waypoints.isEmpty()) {
+                    info = routingService.getRoute(
+                            ride.getDepartureLon(), ride.getDepartureLat(),
+                            ride.getOffice().getLongitude(), ride.getOffice().getLatitude()
+                    );
+                } else {
+                    info = routingService.getRouteWithWaypoints(
+                            ride.getDepartureLon(), ride.getDepartureLat(),
+                            ride.getOffice().getLongitude(), ride.getOffice().getLatitude(),
+                            waypoints
+                    );
+                }
+
                 if (info != null && info.getGeometry() != null) {
                     Route route = routeService.createRoute(
                             info.getGeometry(),
@@ -141,8 +160,11 @@ public class DataInitializer implements CommandLineRunner {
                     ride.setRoute(route);
                     rideRepository.save(ride);
                 }
+
+                Thread.sleep(1000);
             }
         }
+
     }
 
 
@@ -153,13 +175,13 @@ public class DataInitializer implements CommandLineRunner {
         List<User> passengers = userRepository.findAll().stream()
                 .filter(u -> u.getRole() == Role.ROLE_USER)
                 .collect(Collectors.toList());
-
         if (activeRides.isEmpty() || passengers.isEmpty()) return;
 
-        Random random = new Random(42); 
+        Random random = new Random(42);
 
         for (Ride ride : activeRides) {
-            int requestCount = random.nextInt(3) + 1; // 1..3
+            List<double[]> acceptedWaypoints = new ArrayList<>();
+            int requestCount = random.nextInt(3) + 1; // 1-3 заявки
             for (int i = 0; i < requestCount && i < passengers.size(); i++) {
                 User passenger = passengers.get(random.nextInt(passengers.size()));
                 if (rideRequestRepository.existsByRideAndPassengerAndStatusIn(ride, passenger,
@@ -169,19 +191,57 @@ public class DataInitializer implements CommandLineRunner {
                 double pLat = ride.getDepartureLat() + (random.nextDouble() - 0.5) * 0.02;
                 double pLon = ride.getDepartureLon() + (random.nextDouble() - 0.5) * 0.02;
 
+                List<double[]> waypointsForThisRequest = new ArrayList<>(acceptedWaypoints);
+                waypointsForThisRequest.add(new double[]{pLon, pLat});
+
+                RouteInfo info = null;
+                try {
+                    info = routingService.getRouteWithWaypoints(
+                            ride.getDepartureLon(), ride.getDepartureLat(),
+                            ride.getOffice().getLongitude(), ride.getOffice().getLatitude(),
+                            waypointsForThisRequest);
+                    Thread.sleep(1200);
+                } catch (Exception e) {
+                    // log.warn("Failed to get route for sample request", e);
+                }
+
                 RideRequest req = new RideRequest();
                 req.setRide(ride);
                 req.setPassenger(passenger);
                 req.setPassengerDepartureLat(pLat);
                 req.setPassengerDepartureLon(pLon);
+
                 double r = random.nextDouble();
                 if (r < 0.4 && ride.getSeatsAvailable() > 0) {
                     req.setStatus(RideRequestStatus.ACCEPTED);
                     ride.setSeatsAvailable(ride.getSeatsAvailable() - 1);
+                    acceptedWaypoints.add(new double[]{pLon, pLat});
+                    if (info != null) {
+                        Route route = routeService.createRoute(
+                                info.getGeometry(),
+                                info.getDistanceMeters(),
+                                info.getDurationSeconds());
+                        req.setRoute(route);
+                        ride.setRoute(route);
+                    }
                 } else if (r < 0.8) {
                     req.setStatus(RideRequestStatus.PENDING);
+                    if (info != null) {
+                        Route route = routeService.createRoute(
+                                info.getGeometry(),
+                                info.getDistanceMeters(),
+                                info.getDurationSeconds());
+                        req.setRoute(route);
+                    }
                 } else {
                     req.setStatus(RideRequestStatus.REJECTED);
+                    if (info != null) {
+                        Route route = routeService.createRoute(
+                                info.getGeometry(),
+                                info.getDistanceMeters(),
+                                info.getDurationSeconds());
+                        req.setRoute(route);
+                    }
                 }
                 rideRequestRepository.save(req);
             }

@@ -1,0 +1,14 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="9-add-approval-fields-to-rides" author="kaleidostop">
+        <addColumn tableName="rides">
+            <column name="manualApproval" type="boolean"/>
+            <column name="maxDetourMeters" type="double"/>
+            <column name="maxDetourSeconds" type="double"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

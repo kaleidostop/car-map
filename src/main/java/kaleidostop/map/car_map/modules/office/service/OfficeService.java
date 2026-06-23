@@ -1,13 +1,13 @@
 package kaleidostop.map.car_map.modules.office.service;
 
-import java.util.List;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import kaleidostop.map.car_map.common.exception.NotFoundException;
 import kaleidostop.map.car_map.modules.office.domain.Office;
 import kaleidostop.map.car_map.modules.office.dto.OfficeRequest;
 import kaleidostop.map.car_map.modules.office.repository.OfficeRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 public class OfficeService {
@@ -23,7 +23,7 @@ public class OfficeService {
 
     public Office getById(Long id) {
         return officeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Офис не найден"));
+                .orElseThrow(() -> new NotFoundException("Офис", id));
     }
 
     @Transactional
@@ -48,6 +48,9 @@ public class OfficeService {
 
     @Transactional
     public void delete(Long id) {
+        if (!officeRepository.existsById(id)) {
+            throw new NotFoundException("Офис", id);
+        }
         officeRepository.deleteById(id);
     }
 }

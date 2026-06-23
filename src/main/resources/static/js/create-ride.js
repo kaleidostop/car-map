@@ -94,4 +94,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             alert('Ошибка: ' + (err.error || 'Не удалось создать поездку'));
         }
     });
+
+    document.getElementById('manualApproval').addEventListener('change', function() {
+        document.getElementById('auto-limits').style.display = this.checked ? 'none' : 'block';
+    });
 });

@@ -132,19 +132,27 @@ async function loadRequestsForRide(rideId) {
 
 function renderRequests(rideId, requests) {
     const reqDiv = document.getElementById('requests-' + rideId);
+
     if (requests.length === 0) {
         reqDiv.innerHTML = '<p>Нет новых заявок</p>';
         return;
     }
-    reqDiv.innerHTML = requests.map(r => `
-        <div class="d-flex align-items-center justify-content-between border p-2">
-            <span>${r.passengerName} (${r.passengerLat}, ${r.passengerLon})</span>
-            <div>
-                <button class="btn btn-success btn-sm accept-btn" data-request-id="${r.id}" data-ride-id="${rideId}">Принять</button>
-                <button class="btn btn-danger btn-sm reject-btn" data-request-id="${r.id}" data-ride-id="${rideId}">Отклонить</button>
-            </div>
-        </div>
-    `).join('');
+    reqDiv.innerHTML = '';
+
+    const template = document.getElementById('request-card-template');
+    requests.forEach(r => {
+        const clone = template.content.cloneNode(true);
+        clone.querySelector('.passenger-name').textContent = r.passengerName;
+        clone.querySelector('.detour-info').textContent =
+            `Добавит: ${r.detourMeters.toFixed(0)} м, +${r.detourMinutes.toFixed(1)} мин`;
+        const acceptBtn = clone.querySelector('.accept-btn');
+        acceptBtn.dataset.requestId = r.id;
+        acceptBtn.dataset.rideId = rideId;
+        const rejectBtn = clone.querySelector('.reject-btn');
+        rejectBtn.dataset.requestId = r.id;
+        rejectBtn.dataset.rideId = rideId;
+        reqDiv.appendChild(clone);
+    });
 
     attachRequestButtons();
 }
@@ -154,12 +162,9 @@ function attachRequestButtons() {
         btn.onclick = async (e) => {
             const requestId = e.target.dataset.requestId;
             const rideId = e.target.dataset.rideId;
-            const resp = await handleRequest(rideId, requestId, 'accept');
-            if (resp && resp.seatsAvailable !== undefined) {
-                document.getElementById(`seats-${rideId}`).textContent = 
-                    `${resp.seatsAvailable}/${document.getElementById(`seats-${rideId}`).textContent.split('/')[1]}`;
-            }
+            await handleRequest(rideId, requestId, 'accept');
             loadRequestsForRide(rideId);
+            loadMyRides();
         };
     });
 
@@ -169,6 +174,7 @@ function attachRequestButtons() {
             const rideId = e.target.dataset.rideId;
             await handleRequest(rideId, requestId, 'reject');
             loadRequestsForRide(rideId);
+            loadMyRides();
         };
     });
 }

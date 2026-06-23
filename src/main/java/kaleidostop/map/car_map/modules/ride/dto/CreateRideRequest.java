@@ -1,15 +1,10 @@
 package kaleidostop.map.car_map.modules.ride.dto;
 
-import java.time.LocalDateTime;
-
-import jakarta.validation.constraints.DecimalMax;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.FutureOrPresent;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -37,4 +32,7 @@ public class CreateRideRequest {
 
     @Positive(message = "Количество мест должно быть > 0")
     private int seatsTotal;
+
+    private Double maxDetourMeters;
+    private Double maxDetourMinutes;
 }

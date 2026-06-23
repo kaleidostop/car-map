@@ -8,8 +8,8 @@
     <style>.border-purple { border-color: #6f42c1 !important; }</style>
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-dark">
-        <div class="container">
+    <nav class="navbar navbar-dark bg-dark navbar-expand">
+        <div class="container-fluid">
             <a class="navbar-brand" href="/map">CarMap</a>
             <a href="/map" class="btn btn-outline-light btn-sm me-2" id="map-btn">На главную</a>
             <button id="logout-btn" class="btn btn-outline-light btn-sm">Выйти</button>
@@ -40,6 +40,19 @@
                 <button class="btn btn-sm btn-danger cancel-ride-btn" style="display:none;">Отменить</button>
                 <div class="requests-container mt-2"></div>  
                 <div class="passengers-list mt-2" style="display:none;"></div>
+            </div>
+        </div>
+    </template>
+
+    <template id="request-card-template">
+        <div class="d-flex align-items-center justify-content-between border p-2 request-item">
+            <div>
+                <strong class="passenger-name"></strong><br>
+                <small class="text-muted detour-info"></small>
+            </div>
+            <div>
+                <button class="btn btn-success btn-sm accept-btn">Принять</button>
+                <button class="btn btn-danger btn-sm reject-btn">Отклонить</button>
             </div>
         </div>
     </template>

@@ -1,0 +1,12 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="9-rename-approval-columns" author="kaleidostop">
+        <renameColumn tableName="rides" oldColumnName="manualApproval" newColumnName="manual_approval"/>
+        <renameColumn tableName="rides" oldColumnName="maxDetourMeters" newColumnName="max_detour_meters"/>
+        <renameColumn tableName="rides" oldColumnName="maxDetourSeconds" newColumnName="max_detour_seconds"/>
+    </changeSet>
+</databaseChangeLog>

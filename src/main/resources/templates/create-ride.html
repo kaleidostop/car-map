@@ -9,8 +9,8 @@
 
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-dark">
-        <div class="container">
+    <nav class="navbar navbar-dark bg-dark navbar-expand">
+        <div class="container-fluid">
             <a class="navbar-brand" href="/map">CarMap</a>
             <button id="logout-btn" class="btn btn-outline-light btn-sm">Выйти</button>
         </div>
@@ -39,6 +39,20 @@
             <div class="mb-3">
                 <label for="seatsTotal" class="form-label">Количество мест</label>
                 <input type="number" class="form-control" id="seatsTotal" value="4" min="1" max="8" required>
+            </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="manualApproval" checked>
+                <label class="form-check-label" for="manualApproval">Ручное подтверждение заявок</label>
+            </div>
+            <div id="auto-limits" style="display:none;">
+                <div class="mb-3">
+                    <label for="maxDetourMinutes" class="form-label">Макс. добавочное время (мин)</label>
+                    <input type="number" class="form-control" id="maxDetourMinutes" min="0">
+                </div>
+                <div class="mb-3">
+                    <label for="maxDetourMeters" class="form-label">Макс. добавочное расстояние (м)</label>
+                    <input type="number" class="form-control" id="maxDetourMeters" min="0">
+                </div>
             </div>
             <button type="submit" class="btn btn-primary">Создать поездку</button>
             <a href="/map" class="btn btn-secondary">Отмена</a>

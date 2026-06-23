@@ -33,6 +33,9 @@ docker compose up
 
 3. Открыть в браузере http://localhost:8080
 
+Для запуска должны быть установлены переменные среды `JWT_SECRET`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`. 
+
+JWT-секрет можно сгенерировать, например, командой `openssl rand -base64 64`
 
 ## Технологии
 

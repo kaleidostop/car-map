@@ -1,12 +1,14 @@
 package kaleidostop.map.car_map.modules.ride.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-import lombok.Getter;
-
 @Getter
+@AllArgsConstructor
 public class RideResponse {
     private Long id;
     private String driverName;
@@ -25,30 +27,4 @@ public class RideResponse {
     private double durationSeconds;
     private Map<String, Object> routeGeometry;
     private List<Map<String, Object>> passengers; 
-
-    public RideResponse(Long id, String driverName, String driverEmail, String officeName,
-                        double officeLat, double officeLon,
-                        String departureAddress, double departureLat, double departureLon,
-                        LocalDateTime departureTime, int seatsTotal, int seatsAvailable,
-                        String status,
-                        double distanceMeters, double durationSeconds,
-                        Map<String, Object> routeGeometry, List<Map<String, Object>> passengers) {
-        this.id = id;
-        this.driverName = driverName;
-        this.driverEmail = driverEmail;
-        this.officeName = officeName;
-        this.officeLat = officeLat;
-        this.officeLon = officeLon;
-        this.departureAddress = departureAddress;
-        this.departureLat = departureLat;
-        this.departureLon = departureLon;
-        this.departureTime = departureTime;
-        this.seatsTotal = seatsTotal;
-        this.seatsAvailable = seatsAvailable;
-        this.status = status;
-        this.distanceMeters = distanceMeters;
-        this.durationSeconds = durationSeconds;
-        this.routeGeometry = routeGeometry;
-        this.passengers = passengers;
-    }
 }
