@@ -1,22 +1,3 @@
-
-let stompClient = null;
-
-function connectWebSocket() {
-    const token = localStorage.getItem('jwt_token');
-    const socket = new SockJS('/ws?access_token=' + token);
-    stompClient = StompJs.Stomp.over(socket);
-    stompClient.connect({}, function(frame) {
-        console.log('WebSocket connected: ' + frame);
-        stompClient.subscribe('/user/queue/requests', function(message) {
-            const body = JSON.parse(message.body);
-            alert(`Новая заявка от ${body.passengerName} на поездку #${body.rideId}`);
-            loadMyRides();
-        });
-    }, function(error) {
-        console.error('WebSocket error:', error);
-    });
-}
-
 function createRideCard(ride) {
     const template = document.getElementById('ride-card-template');
     const clone = template.content.cloneNode(true);
@@ -186,7 +167,7 @@ async function handleRequest(rideId, requestId, action) {
     });
     if (!response.ok) {
         const err = await response.json();
-        alert(err.error || 'Ошибка обработки заявки');
+        showToast(err.error || 'Ошибка обработки заявки', 'error');
         return null;
     }
     return await response.json(); 
@@ -203,5 +184,14 @@ document.getElementById('logout-btn').addEventListener('click', () => {
     window.location.href = '/login';
 });
 
-connectWebSocket();
+connectWebSocket({
+    onRequest(body) {
+        showToast(`Новая заявка на поездку #${body.rideId}`, 'info');
+        loadMyRides();
+    },
+    onStatus() {
+        loadMyRides();
+    }
+});
+
 loadMyRides();

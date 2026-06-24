@@ -62,5 +62,12 @@ public class Ride {
         this.seatsTotal = request.getSeatsTotal();
         this.seatsAvailable = request.getSeatsTotal();
         this.status = RideStatus.ACTIVE;
+        this.manualApproval = request.getManualApproval() != null ? request.getManualApproval() : true;
+        if (request.getMaxDetourMeters() != null) {
+            this.setMaxDetourMeters(request.getMaxDetourMeters());
+        }
+        if (request.getMaxDetourMinutes() != null) {
+            this.setMaxDetourSeconds(request.getMaxDetourMinutes() * 60L);
+        }
     }
 }

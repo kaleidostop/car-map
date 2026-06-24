@@ -77,7 +77,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             departureLat: parseFloat(document.getElementById('departureLat').value),
             departureLon: parseFloat(document.getElementById('departureLon').value),
             departureTime: document.getElementById('departureTime').value,
-            seatsTotal: parseInt(document.getElementById('seatsTotal').value)
+            seatsTotal: parseInt(document.getElementById('seatsTotal').value),
+            manualApproval: document.getElementById('manualApproval').checked,
+            maxDetourMinutes: parseInt(document.getElementById('maxDetourMinutes').value) || null,
+            maxDetourMeters: parseFloat(document.getElementById('maxDetourMeters').value) || null
         };
 
         const response = await fetchWithAuth('/api/rides', {
@@ -87,15 +90,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         submitBtn.disabled = false;
 
         if (response.ok) {
-            alert('Поездка создана!');
+            showToast('Поездка создана!', 'success');
             window.location.href = '/map';
         } else {
             const err = await response.json();
-            alert('Ошибка: ' + (err.error || 'Не удалось создать поездку'));
+            showToast('Ошибка: ' + (err.error || 'Не удалось создать поездку'), 'danger');
         }
     });
 
     document.getElementById('manualApproval').addEventListener('change', function() {
         document.getElementById('auto-limits').style.display = this.checked ? 'none' : 'block';
     });
+
+    connectWebSocket();
 });

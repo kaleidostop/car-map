@@ -11,10 +11,13 @@ spring:
     show-sql: true
   liquibase:
     change-log: classpath:db/db.changelog-master.xml
+  cache:
+    type: caffeine
+    caffeine:
+      spec: expireAfterWrite=60s
 logging:
   level:
-    root: INFO
-    org.springframework.security: DEBUG
+    org.springframework.cache: DEBUG
 server:
   servlet:
     session:

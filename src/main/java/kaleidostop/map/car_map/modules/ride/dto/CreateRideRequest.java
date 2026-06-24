@@ -32,6 +32,7 @@ public class CreateRideRequest {
     @Positive(message = "Количество мест должно быть > 0")
     private int seatsTotal;
 
+    private Boolean manualApproval;
     private Double maxDetourMeters;
     private Double maxDetourMinutes;
 }

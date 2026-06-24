@@ -1,5 +1,3 @@
-let stompClient = null;
-
 const token = localStorage.getItem('jwt_token');
 if (!token) {
     window.location.href = '/login';
@@ -10,22 +8,6 @@ const groups = {
     'ACCEPTED': { container: 'requests-accepted', color: 'border-success' },
     'REJECTED': { container: 'requests-rejected', color: 'border-danger' }
 };
-
-function connectWebSocket() {
-    const token = localStorage.getItem('jwt_token');
-    const socket = new SockJS('/ws?access_token=' + token);
-    stompClient = StompJs.Stomp.over(socket);
-    stompClient.connect({}, function(frame) {
-        console.log('Connected: ' + frame);
-        stompClient.subscribe('/user/queue/request-status', function(message) {
-            const body = JSON.parse(message.body);
-            alert(body.message);
-            loadMyRequests(); 
-        });
-    }, function(error) {
-        console.error('WebSocket error:', error);
-    });
-}
 
 function renderRequests(requests) {
     Object.values(groups).forEach(g => {
@@ -83,5 +65,13 @@ document.getElementById('logout-btn').addEventListener('click', () => {
     window.location.href = '/login';
 });
 
-connectWebSocket();
+connectWebSocket({
+    onRequest() {
+        loadMyRequests();
+    },
+    onStatus() {
+        loadMyRequests();
+    }
+});
+
 loadMyRequests();

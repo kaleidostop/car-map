@@ -56,9 +56,4 @@ public class GlobalExceptionHandler {
                 .body(Map.of("error", "Неверный email или пароль"));
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>> handleAll(Exception ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "Внутренняя ошибка сервера"));
-    }
 }

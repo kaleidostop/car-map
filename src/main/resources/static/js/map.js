@@ -161,7 +161,7 @@ if (pickModeParam && returnUrl) {
 
 document.getElementById('pick-confirm-btn').addEventListener('click', function() {
     if (!tempMarker) {
-        alert('Пожалуйста, сначала кликните по карте, чтобы выбрать точку.');
+        showToast('Пожалуйста, сначала кликните по карте, чтобы выбрать точку.', 'info');
         return;
     }
     const latlng = tempMarker.getLatLng();
@@ -391,17 +391,16 @@ function joinRide(rideId) {
                 data = { error: text || 'Неизвестная ошибка' };
             }
             if (!response.ok) {
-                alert(data.error || 'Ошибка при отправке заявки');
+                showToast(data.error || 'Ошибка при отправке заявки', 'danger');
             } else {
                 let message = data.message || 'Заявка отправлена';
                 if (data.warning) {
                     message += '\n' + data.warning;
                 }
-                alert(message);
                 loadRides();
             }
         } catch (err) {
-            alert('Ошибка соединения: ' + err.message);
+            showToast('Ошибка соединения: ' + err.message, 'danger');
         }
     });
 }
@@ -423,31 +422,13 @@ async function loadPendingCount() {
     loadPendingCount();
 })();
 
-let stompClient = null;
-
-function connectWebSocket() {
-    const token = localStorage.getItem('jwt_token');
-    const socket = new SockJS('/ws?access_token=' + token);
-    stompClient = StompJs.Stomp.over(socket);
-    stompClient.connect({}, function(frame) {
-        console.log('WS connected: ' + frame);
-
-        stompClient.subscribe('/user/queue/requests', function(message) {
-            const body = JSON.parse(message.body);
-            pendingCount++;
-            updateBadge(pendingCount);
-            alert(`Новая заявка от ${body.passengerName} на поездку #${body.rideId}`);
-            loadRides();
-        });
-
-        stompClient.subscribe('/user/queue/request-status', function(message) {
-            const body = JSON.parse(message.body);
-            alert(body.message || 'Обновление статуса заявки');
-            loadRides();
-        });
-    }, function(error) {
-        console.error('WS error:', error);
-    });
-}
-
-connectWebSocket();
+connectWebSocket({
+    onRequest(body) {
+        pendingCount++;
+        updateBadge(pendingCount);
+        loadRides();
+    },
+    onStatus() {
+        loadRides();
+    }
+});

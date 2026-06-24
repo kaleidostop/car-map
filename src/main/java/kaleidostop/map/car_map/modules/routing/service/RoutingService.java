@@ -1,22 +1,18 @@
 package kaleidostop.map.car_map.modules.routing.service;
 
-import kaleidostop.map.car_map.modules.routing.dto.OsrmResponse;
-import kaleidostop.map.car_map.modules.routing.dto.OsrmRoute;
 import kaleidostop.map.car_map.modules.routing.dto.RouteInfo;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 import java.util.List;
 
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class RoutingService {
-    private final WebClient webClient;
-
-    public RoutingService(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.baseUrl("https://router.project-osrm.org").build();
-    }
+    private final OsrmClient osrmClient;
 
     public RouteInfo getRoute(double fromLon, double fromLat, double toLon, double toLat) {
         return getRouteWithWaypoints(fromLon, fromLat, toLon, toLat, Collections.emptyList());
@@ -24,7 +20,7 @@ public class RoutingService {
 
     public RouteInfo getRouteWithWaypoints(double fromLon, double fromLat, double toLon, double toLat, List<double[]> waypoints) {
         String coords = buildCoordinates(fromLon, fromLat, toLon, toLat, waypoints);
-        return fetchRoute(coords);
+        return osrmClient.fetchRoute(coords);
     }
 
     private String buildCoordinates(double fromLon, double fromLat, double toLon, double toLat, List<double[]> waypoints) {
@@ -35,31 +31,5 @@ public class RoutingService {
         }
         sb.append(";").append(toLon).append(",").append(toLat);
         return sb.toString();
-    }
-
-    private RouteInfo fetchRoute(String coordinates) {
-        OsrmResponse response = webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/route/v1/driving/{coordinates}")
-                        .queryParam("overview", "full")
-                        .queryParam("geometries", "geojson")
-                        .build(coordinates))
-                .retrieve()
-                .bodyToMono(OsrmResponse.class)
-                .onErrorResume(e -> Mono.empty())
-                .block();
-        if (response == null || response.getRoutes().isEmpty()) {
-            return null;
-        }
-
-        return toRouteInfo(response.getRoutes().get(0));
-    }
-
-    private RouteInfo toRouteInfo(OsrmRoute route) {
-        RouteInfo info = new RouteInfo();
-        info.setDistanceMeters(route.getDistance());
-        info.setDurationSeconds(route.getDuration());
-        info.setGeometry(route.getGeometry());
-        return info;
     }
 }

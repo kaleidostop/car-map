@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (currentUserRole !== 'ROLE_ADMIN') {
-        alert('Доступ запрещён');
+        showToast('Доступ запрещён', 'danger');
         window.location.href = '/map';
     }
 
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadOffices();  
             showAlert('Офис сохранён', 'success');
         } else {
-            alert('Ошибка: ' + (data.error || 'Не удалось сохранить'));
+            showToast('Ошибка: ' + (data.error || 'Не удалось сохранить'), 'danger');
         }
     });
 
@@ -222,7 +222,9 @@ document.addEventListener('DOMContentLoaded', () => {
             showAlert('Офис удалён', 'info');
         } else {
             const err = await response.json();
-            alert('Ошибка удаления: ' + (err.error || ''));
+            showToast('Ошибка удаления: ' + (err.error || ''), 'danger');
         }
     });
+
+    connectWebSocket();
 });
