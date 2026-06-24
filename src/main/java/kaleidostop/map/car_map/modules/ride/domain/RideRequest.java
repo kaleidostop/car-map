@@ -2,7 +2,7 @@ package kaleidostop.map.car_map.modules.ride.domain;
 
 import jakarta.persistence.*;
 import kaleidostop.map.car_map.modules.ride.domain.enums.RideRequestStatus;
-import kaleidostop.map.car_map.modules.routing.domain.Route;
+import kaleidostop.map.car_map.modules.ride.dto.JoinRideRequest;
 import kaleidostop.map.car_map.modules.user.domain.User;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,7 +34,13 @@ public class RideRequest {
     private String passengerDepartureAddress;
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "route_id")
-    private Route route;
+    public static RideRequest createPending(Ride ride, User passenger, JoinRideRequest request) {
+        RideRequest req = new RideRequest();
+        req.setRide(ride);
+        req.setPassenger(passenger);
+        req.setPassengerDepartureLat(request.getPassengerLat());
+        req.setPassengerDepartureLon(request.getPassengerLon());
+        req.setStatus(RideRequestStatus.PENDING);
+        return req;
+    }
 }

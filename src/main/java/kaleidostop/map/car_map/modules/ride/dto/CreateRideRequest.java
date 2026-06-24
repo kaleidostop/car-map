@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class CreateRideRequest {
-
     @NotNull(message = "Офис обязателен")
     private Long officeId;
 

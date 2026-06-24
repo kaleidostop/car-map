@@ -22,17 +22,19 @@ public class RoutingService {
         return getRouteWithWaypoints(fromLon, fromLat, toLon, toLat, Collections.emptyList());
     }
 
-    public RouteInfo getRouteWithWaypoints(double fromLon, double fromLat,
-                                           double toLon, double toLat,
-                                           List<double[]> waypoints) {
-        StringBuilder coords = new StringBuilder();
-        coords.append(fromLon).append(",").append(fromLat);
-        for (double[] wp : waypoints) {
-            coords.append(";").append(wp[0]).append(",").append(wp[1]);
-        }
-        coords.append(";").append(toLon).append(",").append(toLat);
+    public RouteInfo getRouteWithWaypoints(double fromLon, double fromLat, double toLon, double toLat, List<double[]> waypoints) {
+        String coords = buildCoordinates(fromLon, fromLat, toLon, toLat, waypoints);
+        return fetchRoute(coords);
+    }
 
-        return fetchRoute(coords.toString());
+    private String buildCoordinates(double fromLon, double fromLat, double toLon, double toLat, List<double[]> waypoints) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(fromLon).append(",").append(fromLat);
+        for (double[] wp : waypoints) {
+            sb.append(";").append(wp[0]).append(",").append(wp[1]);
+        }
+        sb.append(";").append(toLon).append(",").append(toLat);
+        return sb.toString();
     }
 
     private RouteInfo fetchRoute(String coordinates) {
@@ -46,12 +48,14 @@ public class RoutingService {
                 .bodyToMono(OsrmResponse.class)
                 .onErrorResume(e -> Mono.empty())
                 .block();
-
         if (response == null || response.getRoutes().isEmpty()) {
             return null;
         }
 
-        OsrmRoute route = response.getRoutes().get(0);
+        return toRouteInfo(response.getRoutes().get(0));
+    }
+
+    private RouteInfo toRouteInfo(OsrmRoute route) {
         RouteInfo info = new RouteInfo();
         info.setDistanceMeters(route.getDistance());
         info.setDurationSeconds(route.getDuration());

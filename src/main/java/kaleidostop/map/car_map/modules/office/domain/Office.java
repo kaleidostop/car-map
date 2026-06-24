@@ -1,11 +1,8 @@
 package kaleidostop.map.car_map.modules.office.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import kaleidostop.map.car_map.modules.office.dto.OfficeRequest;
+import kaleidostop.map.car_map.modules.office.dto.OfficeSeed;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -24,4 +21,21 @@ public class Office {
     private String address;
     private Double latitude;
     private Double longitude;
+
+
+    public static Office fromSeed(OfficeSeed seed) {
+        Office office = new Office();
+        office.setName(seed.getName());
+        office.setAddress(seed.getAddress());
+        office.setLatitude(seed.getLatitude());
+        office.setLongitude(seed.getLongitude());
+        return office;
+    }
+
+    public void updateFrom(OfficeRequest request) {
+        this.name = request.getName();
+        this.address = request.getAddress();
+        this.latitude = request.getLatitude();
+        this.longitude = request.getLongitude();
+    }
 }

@@ -1,23 +1,20 @@
 package kaleidostop.map.car_map.modules.ride.service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
-
 import jakarta.transaction.Transactional;
 import kaleidostop.map.car_map.modules.ride.domain.Ride;
 import kaleidostop.map.car_map.modules.ride.domain.enums.RideStatus;
 import kaleidostop.map.car_map.modules.ride.repository.RideRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class RideStatusScheduler {
     private final RideRepository rideRepository;
-
-    public RideStatusScheduler(RideRepository rideRepository) {
-        this.rideRepository = rideRepository;
-    }
 
     @Scheduled(fixedRate = 60000) // раз в минуту
     @Transactional

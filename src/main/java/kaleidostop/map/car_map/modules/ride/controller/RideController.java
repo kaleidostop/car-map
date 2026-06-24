@@ -6,8 +6,10 @@ import kaleidostop.map.car_map.modules.ride.dto.CreateRideRequest;
 import kaleidostop.map.car_map.modules.ride.dto.JoinRideRequest;
 import kaleidostop.map.car_map.modules.ride.dto.RideRequestDto;
 import kaleidostop.map.car_map.modules.ride.dto.RideResponse;
+import kaleidostop.map.car_map.modules.ride.service.JoinRideService;
 import kaleidostop.map.car_map.modules.ride.service.RideService;
 import kaleidostop.map.car_map.modules.user.domain.User;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -18,28 +20,18 @@ import java.util.Map;
 
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/rides")
 public class RideController {
     private final RideService rideService;
-
-    public RideController(RideService rideService) {
-        this.rideService = rideService;
-    }
+    private final JoinRideService joinRideService;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('DRIVER', 'ADMIN')")
     public ResponseEntity<?> createRide(@RequestBody @Valid CreateRideRequest request,
                                        Authentication auth) {
         User driver = (User) auth.getPrincipal();
-        Ride ride = rideService.createRide(
-            driver,
-            request.getOfficeId(),
-            request.getDepartureAddress(),
-            request.getDepartureLat(),
-            request.getDepartureLon(),
-            request.getDepartureTime(),
-            request.getSeatsTotal()
-        );
+        Ride ride = rideService.createRide(driver, request);
         return ResponseEntity.ok(ride);
     }
 
@@ -49,8 +41,7 @@ public class RideController {
                                     @Valid @RequestBody JoinRideRequest request,
                                     Authentication auth) {
         User passenger = (User) auth.getPrincipal();
-        Map<String, Object> result = rideService.joinRide(rideId, passenger,
-            request.getPassengerLat(), request.getPassengerLon());
+        Map<String, Object> result = joinRideService.joinRide(rideId, passenger, request);
         return ResponseEntity.ok(result);
     }
 
@@ -63,7 +54,7 @@ public class RideController {
     @GetMapping("/{rideId}/requests")
     @PreAuthorize("hasAnyRole('DRIVER', 'ADMIN')")
     public ResponseEntity<List<RideRequestDto>> getRequests(@PathVariable(name = "rideId") Long rideId, Authentication auth) {
-        return ResponseEntity.ok(rideService.getPendingRequests(rideId, (User) auth.getPrincipal()));
+        return ResponseEntity.ok(joinRideService.getPendingRequests(rideId, (User) auth.getPrincipal()));
     }
 
     @PatchMapping("/{rideId}/requests/{requestId}")
@@ -72,12 +63,12 @@ public class RideController {
                                         @PathVariable(name = "requestId") Long requestId,
                                         @RequestParam(name = "action") String action,
                                         Authentication auth) {
-        return ResponseEntity.ok(rideService.handleRequest(rideId, requestId, action, (User) auth.getPrincipal()));
+        return ResponseEntity.ok(joinRideService.handleRequest(rideId, requestId, action, (User) auth.getPrincipal()));
     }
 
     @GetMapping("/my")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<RideResponse>> getMyRides(Authentication auth) {
+    public ResponseEntity<List<RideResponse>> getActiveRides(Authentication auth) {
         User user = (User) auth.getPrincipal();
         return ResponseEntity.ok(rideService.getRidesByDriver(user));
     }

@@ -1,5 +1,8 @@
 package kaleidostop.map.car_map.common.config;
 
+import jakarta.servlet.http.HttpServletResponse;
+import kaleidostop.map.car_map.common.security.JwtAuthFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,19 +22,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.context.NullSecurityContextRepository;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import jakarta.servlet.http.HttpServletResponse;
-import kaleidostop.map.car_map.common.security.JwtAuthFilter;
-
 @Configuration
+@RequiredArgsConstructor
 @EnableWebSecurity
 public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
-
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter, UserDetailsService userDetailsService) {
-        this.jwtAuthFilter = jwtAuthFilter;
-        this.userDetailsService = userDetailsService;
-    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

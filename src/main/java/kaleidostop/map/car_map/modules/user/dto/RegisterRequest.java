@@ -19,5 +19,6 @@ public class RegisterRequest {
     @NotBlank(message = "Полное имя обязательно")
     private String fullName;
 
+    @NotBlank(message = "Роль обязательна")
     private String role;
 }

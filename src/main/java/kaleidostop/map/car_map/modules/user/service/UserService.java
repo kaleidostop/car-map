@@ -1,36 +1,48 @@
 package kaleidostop.map.car_map.modules.user.service;
 
+import kaleidostop.map.car_map.common.exception.NotFoundException;
+import kaleidostop.map.car_map.common.exception.UserAlreadyExistsException;
+import kaleidostop.map.car_map.modules.user.domain.User;
+import kaleidostop.map.car_map.modules.user.domain.enums.Role;
+import kaleidostop.map.car_map.modules.user.dto.RegisterRequest;
+import kaleidostop.map.car_map.modules.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import kaleidostop.map.car_map.modules.user.domain.User;
-import kaleidostop.map.car_map.modules.user.domain.enums.Role;
-import kaleidostop.map.car_map.modules.user.repository.UserRepository;
-
 @Service
+@RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
-
-    public User register(String email, String password, String fullName, Role role) {
-        if (userRepository.existsByEmail(email)) {
-            throw new RuntimeException("Email already in use");
+    public User register(RegisterRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new UserAlreadyExistsException(request.getEmail());
         }
+
         User user = new User();
-        user.setEmail(email);
-        user.setPasswordHash(passwordEncoder.encode(password));
-        user.setFullName(fullName);
-        user.setRole(role);
+        user.setEmail(request.getEmail());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setFullName(request.getFullName());
+        user.setRole(resolveRole(request.getRole()));
         return userRepository.save(user);
     }
 
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new NotFoundException("Пользователь", email));
+    }
+
+    private Role resolveRole(String roleStr) {
+        try {
+            Role role = Role.valueOf(roleStr);
+            if (role == Role.ROLE_ADMIN) {
+                throw new IllegalArgumentException("Регистрация с ролью администратора запрещена");
+            }
+            return role;
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Недопустимая роль: " + roleStr);
+        }
     }
 }

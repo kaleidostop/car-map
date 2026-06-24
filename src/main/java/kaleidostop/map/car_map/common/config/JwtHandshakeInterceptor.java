@@ -1,6 +1,8 @@
 package kaleidostop.map.car_map.common.config;
+
 import jakarta.servlet.http.HttpServletRequest;
 import kaleidostop.map.car_map.common.security.JwtUtil;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -11,15 +13,10 @@ import org.springframework.web.socket.server.support.HttpSessionHandshakeInterce
 
 import java.util.Map;
 
+@RequiredArgsConstructor
 public class JwtHandshakeInterceptor extends HttpSessionHandshakeInterceptor {
-
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
-
-    public JwtHandshakeInterceptor(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
-        this.jwtUtil = jwtUtil;
-        this.userDetailsService = userDetailsService;
-    }
 
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, org.springframework.http.server.ServerHttpResponse response,

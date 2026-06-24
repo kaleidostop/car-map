@@ -1,23 +1,17 @@
 package kaleidostop.map.car_map.modules.user.domain;
 
-import java.util.Collection;
-import java.util.List;
-
+import jakarta.persistence.*;
+import kaleidostop.map.car_map.modules.user.domain.enums.Role;
+import kaleidostop.map.car_map.modules.user.dto.UserSeed;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import kaleidostop.map.car_map.modules.user.domain.enums.Role;
-import lombok.Getter;
-import lombok.Setter;
+import java.util.Collection;
+import java.util.List;
 
 @Getter
 @Setter
@@ -64,4 +58,13 @@ public class User implements UserDetails {
     public boolean isCredentialsNonExpired() { return true; }
     @Override
     public boolean isEnabled() { return true; }
+
+    public static User fromSeed(UserSeed seed, PasswordEncoder passwordEncoder) {
+        User user = new User();
+        user.setEmail(seed.getEmail());
+        user.setPasswordHash(passwordEncoder.encode(seed.getPassword()));
+        user.setFullName(seed.getFullName());
+        user.setRole(Role.valueOf(seed.getRole()));
+        return user;
+    }
 }

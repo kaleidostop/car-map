@@ -1,5 +1,6 @@
 package kaleidostop.map.car_map.modules.ride.dto;
 
+import kaleidostop.map.car_map.modules.ride.domain.Ride;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -26,5 +27,17 @@ public class RideResponse {
     private double distanceMeters;
     private double durationSeconds;
     private Map<String, Object> routeGeometry;
-    private List<Map<String, Object>> passengers; 
+    private List<Map<String, Object>> passengers;
+
+    public static RideResponse from(Ride ride, double distance, double duration,
+                                    Map<String, Object> geometry,
+                                    List<Map<String, Object>> passengers) {
+        return new RideResponse(
+                ride.getId(), ride.getDriver().getFullName(), ride.getDriver().getEmail(),
+                ride.getOffice().getName(), ride.getOffice().getLatitude(), ride.getOffice().getLongitude(),
+                ride.getDepartureAddress(), ride.getDepartureLat(), ride.getDepartureLon(),
+                ride.getDepartureTime(), ride.getSeatsTotal(), ride.getSeatsAvailable(),
+                ride.getStatus().name(), distance, duration, geometry, passengers
+        );
+    }
 }
