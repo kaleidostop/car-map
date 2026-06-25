@@ -3,6 +3,7 @@ package kaleidostop.map.car_map.modules.routing.service;
 import kaleidostop.map.car_map.modules.routing.dto.OsrmResponse;
 import kaleidostop.map.car_map.modules.routing.dto.OsrmRoute;
 import kaleidostop.map.car_map.modules.routing.dto.RouteInfo;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -11,12 +12,9 @@ import reactor.core.publisher.Mono;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class OsrmClient {
     private final WebClient.Builder webClientBuilder;
-
-    public OsrmClient(WebClient.Builder webClientBuilder) {
-        this.webClientBuilder = webClientBuilder;
-    }
 
     @Cacheable(value = "osrmRoutes", key = "#coordinates")
     public RouteInfo fetchRoute(String coordinates) {

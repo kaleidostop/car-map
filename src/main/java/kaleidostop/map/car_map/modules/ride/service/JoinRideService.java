@@ -179,6 +179,7 @@ public class JoinRideService {
                     ride.getSeatsAvailable() + "). Ваш запрос может быть не удовлетворён.";
         }
         rideRequestRepository.save(request);
+        notifyPassenger(request, "Ваша заявка отправлена водителю");
         notifyDriver(ride, request.getPassenger(), "Новая заявка ожидает подтверждения");
         return buildJoinResponse(request, warning);
     }

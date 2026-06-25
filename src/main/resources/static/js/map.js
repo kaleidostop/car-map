@@ -20,7 +20,6 @@ if (!token) {
 let pendingCount = 0;
 const badge = document.getElementById('requests-badge');
 
-// Функция обновления бейджа
 function updateBadge(count) {
     if (badge) {
         if (count > 0) {

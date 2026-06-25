@@ -54,7 +54,11 @@ function connectWebSocket({ onRequest, onStatus } = {}) {
         });
         stompClient.subscribe('/user/queue/request-status', function(message) {
             const body = JSON.parse(message.body);
-            showToast(body.message, body.status === 'ACCEPTED' ? 'success' : 'danger');
+            let type = 'primary';
+            if (body.status === 'ACCEPTED') type = 'success';
+            else if (body.status === 'REJECTED') type = 'danger';
+            else if (body.status === 'PENDING') type = 'warning';
+            showToast(body.message, type);
             if (onStatus) onStatus(body);
         });
     }, function(error) {
