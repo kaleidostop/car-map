@@ -12,16 +12,20 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
 @Component
 public class JwtUtil {
-    @Value("${jwt.secret}")
-    private String secret;
+    private final String secret;
+    private final long accessTokenExpiration;
 
-    @Value("${jwt.access-token-expiration}")
-    private long accessTokenExpiration;
+    public JwtUtil(@Value("${jwt.secret}") String secret,
+                   @Value("${jwt.access-token-expiration}") long accessTokenExpiration) {
+        this.secret = secret;
+        this.accessTokenExpiration = accessTokenExpiration;
+    }
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
@@ -40,8 +44,12 @@ public class JwtUtil {
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String email = extractEmail(token);
-        return (email.equals(userDetails.getUsername())) && !isTokenExpired(token);
+        try {
+            final String email = extractEmail(token);
+            return email.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        } catch (JwtException | IllegalArgumentException ex) {
+            return false;
+        }
     }
 
     private Claims extractClaims(String token) {

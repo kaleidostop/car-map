@@ -44,9 +44,9 @@ let stompClient = null;
 function connectWebSocket({ onRequest, onStatus } = {}) {
     const token = localStorage.getItem('jwt_token');
     if (!token) return;
-    const socket = new SockJS('/ws?access_token=' + token);
+    const socket = new SockJS('/ws');
     stompClient = StompJs.Stomp.over(socket);
-    stompClient.connect({}, function(frame) {
+    stompClient.connect({ Authorization: 'Bearer ' + token }, function(frame) {
         stompClient.subscribe('/user/queue/requests', function(message) {
             const body = JSON.parse(message.body);
             showToast(body.message || `Новая заявка на поездку #${body.rideId}`);

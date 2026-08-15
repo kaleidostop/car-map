@@ -44,7 +44,7 @@ public class JoinRideService {
 
     @Transactional
     public Map<String, Object> joinRide(Long rideId, User passenger, JoinRideRequest request) {
-        Ride ride = rideRepository.findById(rideId)
+        Ride ride = rideRepository.findByIdForUpdate(rideId)
                 .orElseThrow(() -> new NotFoundException("Поездка", rideId));
         validateJoinRequest(ride, passenger);
 
@@ -65,10 +65,11 @@ public class JoinRideService {
 
     @Transactional
     public Map<String, Object> handleRequest(Long rideId, Long requestId, String action, User driver) {
+        Ride ride = rideRepository.findByIdForUpdate(rideId)
+                .orElseThrow(() -> new NotFoundException("Поездка", rideId));
         RideRequest request = rideRequestRepository.findById(requestId)
                 .orElseThrow(() -> new NotFoundException("Заявка", requestId));
-        Ride ride = request.getRide();
-        if (!ride.getId().equals(rideId)) {
+        if (!request.getRide().getId().equals(rideId)) {
             throw new IllegalArgumentException("Несоответствие поездки");
         }
         if (!ride.getDriver().getId().equals(driver.getId())) {
