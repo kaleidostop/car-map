@@ -43,10 +43,29 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-thymeleaf-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+	testImplementation("org.springframework.boot:spring-boot-testcontainers")
+	testImplementation("org.testcontainers:testcontainers-junit-jupiter")
+	testImplementation("org.testcontainers:testcontainers-postgresql")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.withType<Test> {
-	enabled = false
-	// useJUnitPlatform()
+	useJUnitPlatform()
+}
+
+tasks.test {
+	exclude("**/*IntegrationTest.class")
+}
+
+val integrationTest by tasks.registering(Test::class) {
+	description = "Runs integration tests against Testcontainers."
+	group = "verification"
+	testClassesDirs = sourceSets.test.get().output.classesDirs
+	classpath = sourceSets.test.get().runtimeClasspath
+	include("**/*IntegrationTest.class")
+	shouldRunAfter(tasks.test)
+}
+
+tasks.check {
+	dependsOn(integrationTest)
 }
