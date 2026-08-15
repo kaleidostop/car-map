@@ -232,6 +232,7 @@ class CarMapIntegrationTest {
     @Test
     void authenticatedWebSocketReceivesUserDestinationMessage() throws Exception {
         StompSession session = connectWebSocket(bearer(passengerOne));
+        session.setAutoReceipt(true);
         ArrayBlockingQueue<String> messages = new ArrayBlockingQueue<>(1);
         CountDownLatch subscribed = new CountDownLatch(1);
         StompSession.Subscription subscription = session.subscribe("/user/queue/request-status", new StompFrameHandler() {
@@ -285,7 +286,6 @@ class CarMapIntegrationTest {
         SockJsClient sockJsClient = new SockJsClient(
                 List.of(new WebSocketTransport(new StandardWebSocketClient())));
         stompClient = new WebSocketStompClient(sockJsClient);
-        stompClient.setAutoReceiptTime(2_000);
         StompHeaders connectHeaders = new StompHeaders();
         connectHeaders.set(HttpHeaders.AUTHORIZATION, authorization);
         return stompClient.connectAsync(
