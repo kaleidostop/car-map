@@ -32,6 +32,8 @@ import org.springframework.messaging.simp.stomp.StompFrameHandler;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
+import org.springframework.messaging.simp.user.SimpUser;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.socket.WebSocketHttpHeaders;
@@ -100,6 +102,8 @@ class CarMapIntegrationTest {
     private JwtUtil jwtUtil;
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
+    @Autowired
+    private SimpUserRegistry userRegistry;
     @MockitoBean
     private RoutingService routingService;
     @LocalServerPort
@@ -232,10 +236,8 @@ class CarMapIntegrationTest {
     @Test
     void authenticatedWebSocketReceivesUserDestinationMessage() throws Exception {
         StompSession session = connectWebSocket(bearer(passengerOne));
-        session.setAutoReceipt(true);
         ArrayBlockingQueue<String> messages = new ArrayBlockingQueue<>(1);
-        CountDownLatch subscribed = new CountDownLatch(1);
-        StompSession.Subscription subscription = session.subscribe("/user/queue/request-status", new StompFrameHandler() {
+        session.subscribe("/user/queue/request-status", new StompFrameHandler() {
             @Override
             public Type getPayloadType(StompHeaders headers) {
                 return byte[].class;
@@ -246,8 +248,7 @@ class CarMapIntegrationTest {
                 messages.offer(new String((byte[]) payload));
             }
         });
-        subscription.addReceiptTask(subscribed::countDown);
-        assertTrue(subscribed.await(5, TimeUnit.SECONDS));
+        assertTrue(awaitUserSubscription(passengerOne.getEmail(), Duration.ofSeconds(5)));
 
         messagingTemplate.convertAndSendToUser(passengerOne.getEmail(), "/queue/request-status",
                 Map.of("status", "ACCEPTED", "message", "accepted"));
@@ -292,6 +293,19 @@ class CarMapIntegrationTest {
                         "http://localhost:" + port + "/ws",
                         new WebSocketHttpHeaders(), connectHeaders, new StompSessionHandlerAdapter() {})
                 .get(Duration.ofSeconds(5).toMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    private boolean awaitUserSubscription(String username, Duration timeout) throws InterruptedException {
+        long deadline = System.nanoTime() + timeout.toNanos();
+        while (System.nanoTime() < deadline) {
+            SimpUser user = userRegistry.getUser(username);
+            if (user != null && user.getSessions().stream()
+                    .anyMatch(webSocketSession -> !webSocketSession.getSubscriptions().isEmpty())) {
+                return true;
+            }
+            TimeUnit.MILLISECONDS.sleep(25);
+        }
+        return false;
     }
 
     private User saveUser(String email, Role role) {
